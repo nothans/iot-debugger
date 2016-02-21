@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Debugger</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/jquery/1.12.0/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript">
+
+        // setup time for updates
+        var updates = null;
+
+        // setup IoT service details and defaults
+        var iotURL = "http://api.thingspeak.com";
+        var iotParams = {};
+
+        iotParams['channel'] = 9;
+        iotParams['read_api_key'] = 'GM7T1VBPSLT5EV0L';
+        iotParams['results'] = 5;
+        iotParams['location'] = false;
+        iotParams['status'] = false;
+
+        $(document).ready(function() {
+
+            // set default inputs
+            $('#channel').val(iotParams['channel']);
+            $('#read_api_key').val(iotParams['read_api_key']);
+
+            // when inputs change update params and clear output
+            $( ".form-control" ).change(function(input) {
+                iotParams['channel'] = $('#channel').val();
+                iotParams['read_api_key'] = $('#read_api_key').val();
+
+                $('#header').html('');
+                $('#output').html('');
+            });
+
+        });
+
+        function getUpdates() {
+
+            // get the data with a webservice call
+            $.getJSON( iotURL + '/channels/' + iotParams['channel'] + '/feed.json?results=' + iotParams['results'] + '&location=' + iotParams['location'] + '&status=' + iotParams['status'] + '&api_key=' + iotParams['read_api_key'], function( data ) {
+
+                // create table and headers if channel object exists
+                if (data.channel) {
+
+                    // set headers
+                    $('#header').html('<b>' + data.channel.name + '</b>');
+
+                    // create table head and body if they do not exist
+                    if ($('#output').find('thead').length == 0) {
+
+                        // add head to output table
+                        $('#output').append("<thead><tr></tr></thead>");
+
+                        // add date/time field as header
+                        $('#output').find('thead').append("<th>Update Time</th>");
+
+                        // add header for each field
+                        if (data.channel.hasOwnProperty('field1')) { $('#output').find('thead').append("<th>Field 1</th>"); }
+                        if (data.channel.hasOwnProperty('field2')) { $('#output').find('thead').append("<th>Field 2</th>"); }
+                        if (data.channel.hasOwnProperty('field3')) { $('#output').find('thead').append("<th>Field 3</th>"); }
+                        if (data.channel.hasOwnProperty('field4')) { $('#output').find('thead').append("<th>Field 4</th>"); }
+                        if (data.channel.hasOwnProperty('field5')) { $('#output').find('thead').append("<th>Field 5</th>"); }
+                        if (data.channel.hasOwnProperty('field6')) { $('#output').find('thead').append("<th>Field 6</th>"); }
+                        if (data.channel.hasOwnProperty('field7')) { $('#output').find('thead').append("<th>Field 7</th>"); }
+                        if (data.channel.hasOwnProperty('field8')) { $('#output').find('thead').append("<th>Field 8</th>"); }
+
+                        // add location fields if included
+                        if (iotParams['location']) {
+                            $('#output').find('thead').append("<th>Latitude</th>");
+                            $('#output').find('thead').append("<th>Longitude</th>");
+                            $('#output').find('thead').append("<th>Elevation</th>");
+                        }
+
+                        // add status field if included
+                        if (iotParams['status']) {
+                            $('#output').find('thead').append("<th>Status</th>");
+                        }
+
+                        // add body to output table
+                        $('#output').append("<tbody></tbody>");
+
+                    }
+
+                }
+
+                // if the field1 has data update the page
+				if (data.feeds) {
+
+                    // go through each feed and add it to the top of the table if the row does not exist
+				    $.each( data.feeds, function( i, feed ) {
+
+                        // add entry to table if it does not exist
+                        if ($('#output').find('#' + feed.entry_id).length == 0) {
+
+                            // add row to output table
+                            $('#output').find('tbody').prepend("<tr id='" + feed.entry_id + "'></tr>");
+
+                            // add time/date data to field
+                            $('#' + feed.entry_id).append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
+
+                            // add field data to each field
+                            if (feed.hasOwnProperty('field1')) { $('#' + feed.entry_id).append("<td>" + feed.field1 + "</td>"); }
+                            if (feed.hasOwnProperty('field2')) { $('#' + feed.entry_id).append("<td>" + feed.field2 + "</td>"); }
+                            if (feed.hasOwnProperty('field3')) { $('#' + feed.entry_id).append("<td>" + feed.field3 + "</td>"); }
+                            if (feed.hasOwnProperty('field4')) { $('#' + feed.entry_id).append("<td>" + feed.field4 + "</td>"); }
+                            if (feed.hasOwnProperty('field5')) { $('#' + feed.entry_id).append("<td>" + feed.field5 + "</td>"); }
+                            if (feed.hasOwnProperty('field6')) { $('#' + feed.entry_id).append("<td>" + feed.field6 + "</td>"); }
+                            if (feed.hasOwnProperty('field7')) { $('#' + feed.entry_id).append("<td>" + feed.field7 + "</td>"); }
+                            if (feed.hasOwnProperty('field8')) { $('#' + feed.entry_id).append("<td>" + feed.field8 + "</td>"); }
+
+                            // add location data if included
+                            if (iotParams['location']) {
+                                $('#' + feed.entry_id).append("<td>" + feed.latitude + "</td>");
+                                $('#' + feed.entry_id).append("<td>" + feed.longitude + "</td>");
+                                $('#' + feed.entry_id).append("<td>" + feed.elevation + "</td>");
+                            }
+
+                            // add status data if included
+                            if (iotParams['status']) {
+                                $('#' + feed.entry_id).append("<td>" + feed.status + "</td>");
+                            }
+
+                        }
+
+                    });
+
+				}
+            });
+
+        }
+
+        // start / stop updates
+        function playPause(button) {
+
+            // switch button state and start or stop updates
+            if ($(button).find(".glyphicon").hasClass("glyphicon-pause")) {
+
+                // show play button state
+                $(button).find(".glyphicon").removeClass("glyphicon-pause").addClass("glyphicon-play");
+
+                // stop updates
+                clearInterval(updates);
+
+            }
+            else {
+
+                // show pause button state
+                $(button).find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
+
+                // start updates
+                getUpdates();
+
+                // check for new updates
+                updates = setInterval('getUpdates()',5000);
+
+            }
+
+        }
+
+        // option to include location data
+        function includeLocation(button) {
+
+            // switch button state and change API request
+            if ($(button).find(".glyphicon").hasClass("glyphicon-unchecked")) {
+
+                // show checked button state
+                $(button).find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
+
+                // update params
+                iotParams['location'] = true;
+
+                // clear output table
+                $('#output').html('');
+
+            }
+            else {
+
+                // show unchecked button state
+                $(button).find(".glyphicon").removeClass("glyphicon-check").addClass("glyphicon-unchecked");
+
+                // update params
+                iotParams['location'] = false;
+
+                // clear output table
+                $('#output').html('');
+
+            }
+
+        }
+
+        // option to include status data
+        function includeStatus(button) {
+
+            // switch button state and change API request
+            if ($(button).find(".glyphicon").hasClass("glyphicon-unchecked")) {
+
+                // show checked button state
+                $(button).find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
+
+                // update params
+                iotParams['status'] = true;
+
+                // clear output table
+                $('#output').html('');
+
+            }
+            else {
+
+                // show unchecked button state
+                $(button).find(".glyphicon").removeClass("glyphicon-check").addClass("glyphicon-unchecked");
+
+                // update params
+                iotParams['status'] = false;
+
+                // clear output table
+                $('#output').html('');
+
+            }
+
+        }
+
+    </script>
+</head>
+<body>
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">IoT Debugger</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="input-group">
+                            <span class="input-group-addon">Channel</span>
+                            <input type="text" class="form-control" id="channel">
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-addon">Read API Key</span>
+                            <input type="text" class="form-control" id="read_api_key">
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <button type="button" class="btn btn-default" onClick="includeLocation(this)">
+                            <span class="glyphicon glyphicon-unchecked"></span> Location
+                        </button>
+
+                        <button type="button" class="btn btn-default" onClick="includeStatus(this)">
+                            <span class="glyphicon glyphicon-unchecked"></span> Status
+                        </button>
+
+                        <button type="button" class="btn btn-default" onClick="playPause(this)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <h1 id="header"></h1>
+
+                <table class="table table-striped" id="output"></table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
