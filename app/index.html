@@ -7,13 +7,17 @@
   <script src="https://cdn.jsdelivr.net/jquery/1.12.0/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
+  <style type="text/css">
+	.feed-row { transition: background-color 2s ease; }
+  </style>
+  
   <script type="text/javascript">
 
         // setup time for updates
         var updates = null;
 
         // setup IoT service details and defaults
-        var iotURL = "http://api.thingspeak.com";
+        var iotURL = "https://api.thingspeak.com";
         var iotParams = {};
 
         iotParams['channel'] = 9;
@@ -95,35 +99,47 @@
                     $.each( data.feeds, function( i, feed ) {
 
                         // add entry to table if it does not exist
-                        if ($('#output').find('#entry_' + feed.entry_id).length == 0) {
+                        if ($('#output').find('#entry_' + feed.entry_id).length === 0) {
 
-                            // add row to output table
-                            $('#output').find('tbody').prepend("<tr id='entry_" + feed.entry_id + "'></tr>");
-
+							// create a new blank row
+							var $new_row = $("<tr id='entry_" + feed.entry_id + "' class='feed-row'></tr>");
+						
                             // add time/date data to field
-                            $('#entry_' + feed.entry_id).append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
-
+							$new_row.append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
+							
                             // add field data to each field
-                            if (feed.hasOwnProperty('field1')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field1 + "</td>"); }
-                            if (feed.hasOwnProperty('field2')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field2 + "</td>"); }
-                            if (feed.hasOwnProperty('field3')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field3 + "</td>"); }
-                            if (feed.hasOwnProperty('field4')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field4 + "</td>"); }
-                            if (feed.hasOwnProperty('field5')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field5 + "</td>"); }
-                            if (feed.hasOwnProperty('field6')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field6 + "</td>"); }
-                            if (feed.hasOwnProperty('field7')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field7 + "</td>"); }
-                            if (feed.hasOwnProperty('field8')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field8 + "</td>"); }
+                            if (feed.hasOwnProperty('field1')) { $new_row.append("<td>" + feed.field1 + "</td>"); }
+                            if (feed.hasOwnProperty('field2')) { $new_row.append("<td>" + feed.field2 + "</td>"); }
+                            if (feed.hasOwnProperty('field3')) { $new_row.append("<td>" + feed.field3 + "</td>"); }
+                            if (feed.hasOwnProperty('field4')) { $new_row.append("<td>" + feed.field4 + "</td>"); }
+                            if (feed.hasOwnProperty('field5')) { $new_row.append("<td>" + feed.field5 + "</td>"); }
+                            if (feed.hasOwnProperty('field6')) { $new_row.append("<td>" + feed.field6 + "</td>"); }
+                            if (feed.hasOwnProperty('field7')) { $new_row.append("<td>" + feed.field7 + "</td>"); }
+                            if (feed.hasOwnProperty('field8')) { $new_row.append("<td>" + feed.field8 + "</td>"); }
 
                             // add location data if included
                             if (iotParams['location']) {
-                                $('#entry_' + feed.entry_id).append("<td>" + feed.latitude + "</td>");
-                                $('#entry_' + feed.entry_id).append("<td>" + feed.longitude + "</td>");
-                                $('#entry_' + feed.entry_id).append("<td>" + feed.elevation + "</td>");
+                                $new_row.append("<td>" + feed.latitude + "</td>");
+                                $new_row.append("<td>" + feed.longitude + "</td>");
+                                $new_row.append("<td>" + feed.elevation + "</td>");
                             }
 
                             // add status data if included
                             if (iotParams['status']) {
-                                $('#entry_' + feed.entry_id).append("<td>" + feed.status + "</td>");
+                                $new_row.append("<td>" + feed.status + "</td>");
                             }
+							
+							// add the row to the table
+							$('#output').prepend($new_row);
+							
+							// set the background color to green
+							$new_row.css('background-color', '#efe');
+							
+							// remove the background color after 500ms
+							// css transitions are used with the feed-row class to make this smooth
+							setTimeout(function() {
+								$new_row.css('background-color', '');
+							}, 500);
 
                         }
 
