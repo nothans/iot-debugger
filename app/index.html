@@ -89,10 +89,10 @@
                 }
 
                 // if the field1 has data update the page
-				if (data.feeds) {
+                if (data.feeds) {
 
                     // go through each feed and add it to the top of the table if the row does not exist
-				    $.each( data.feeds, function( i, feed ) {
+                    $.each( data.feeds, function( i, feed ) {
 
                         // add entry to table if it does not exist
                         if ($('#output').find('#entry_' + feed.entry_id).length == 0) {
@@ -129,7 +129,7 @@
 
                     });
 
-				}
+                }
             });
 
         }
