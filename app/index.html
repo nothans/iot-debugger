@@ -95,34 +95,34 @@
 				    $.each( data.feeds, function( i, feed ) {
 
                         // add entry to table if it does not exist
-                        if ($('#output').find('#' + feed.entry_id).length == 0) {
+                        if ($('#output').find('#entry_' + feed.entry_id).length == 0) {
 
                             // add row to output table
-                            $('#output').find('tbody').prepend("<tr id='" + feed.entry_id + "'></tr>");
+                            $('#output').find('tbody').prepend("<tr id='entry_" + feed.entry_id + "'></tr>");
 
                             // add time/date data to field
-                            $('#' + feed.entry_id).append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
+                            $('#entry_' + feed.entry_id).append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
 
                             // add field data to each field
-                            if (feed.hasOwnProperty('field1')) { $('#' + feed.entry_id).append("<td>" + feed.field1 + "</td>"); }
-                            if (feed.hasOwnProperty('field2')) { $('#' + feed.entry_id).append("<td>" + feed.field2 + "</td>"); }
-                            if (feed.hasOwnProperty('field3')) { $('#' + feed.entry_id).append("<td>" + feed.field3 + "</td>"); }
-                            if (feed.hasOwnProperty('field4')) { $('#' + feed.entry_id).append("<td>" + feed.field4 + "</td>"); }
-                            if (feed.hasOwnProperty('field5')) { $('#' + feed.entry_id).append("<td>" + feed.field5 + "</td>"); }
-                            if (feed.hasOwnProperty('field6')) { $('#' + feed.entry_id).append("<td>" + feed.field6 + "</td>"); }
-                            if (feed.hasOwnProperty('field7')) { $('#' + feed.entry_id).append("<td>" + feed.field7 + "</td>"); }
-                            if (feed.hasOwnProperty('field8')) { $('#' + feed.entry_id).append("<td>" + feed.field8 + "</td>"); }
+                            if (feed.hasOwnProperty('field1')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field1 + "</td>"); }
+                            if (feed.hasOwnProperty('field2')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field2 + "</td>"); }
+                            if (feed.hasOwnProperty('field3')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field3 + "</td>"); }
+                            if (feed.hasOwnProperty('field4')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field4 + "</td>"); }
+                            if (feed.hasOwnProperty('field5')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field5 + "</td>"); }
+                            if (feed.hasOwnProperty('field6')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field6 + "</td>"); }
+                            if (feed.hasOwnProperty('field7')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field7 + "</td>"); }
+                            if (feed.hasOwnProperty('field8')) { $('#entry_' + feed.entry_id).append("<td>" + feed.field8 + "</td>"); }
 
                             // add location data if included
                             if (iotParams['location']) {
-                                $('#' + feed.entry_id).append("<td>" + feed.latitude + "</td>");
-                                $('#' + feed.entry_id).append("<td>" + feed.longitude + "</td>");
-                                $('#' + feed.entry_id).append("<td>" + feed.elevation + "</td>");
+                                $('#entry_' + feed.entry_id).append("<td>" + feed.latitude + "</td>");
+                                $('#entry_' + feed.entry_id).append("<td>" + feed.longitude + "</td>");
+                                $('#entry_' + feed.entry_id).append("<td>" + feed.elevation + "</td>");
                             }
 
                             // add status data if included
                             if (iotParams['status']) {
-                                $('#' + feed.entry_id).append("<td>" + feed.status + "</td>");
+                                $('#entry_' + feed.entry_id).append("<td>" + feed.status + "</td>");
                             }
 
                         }
