@@ -8,9 +8,9 @@
   <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
   <style type="text/css">
-	.feed-row { transition: background-color 2s ease; }
+    .feed-row { transition: background-color 2s ease; }
   </style>
-  
+
   <script type="text/javascript">
 
         // setup time for updates
@@ -101,12 +101,12 @@
                         // add entry to table if it does not exist
                         if ($('#output').find('#entry_' + feed.entry_id).length === 0) {
 
-							// create a new blank row
-							var $new_row = $("<tr id='entry_" + feed.entry_id + "' class='feed-row'></tr>");
-						
+                            // create a new blank row
+                            var $new_row = $("<tr id='entry_" + feed.entry_id + "' class='feed-row'></tr>");
+
                             // add time/date data to field
-							$new_row.append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
-							
+                            $new_row.append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
+
                             // add field data to each field
                             if (feed.hasOwnProperty('field1')) { $new_row.append("<td>" + feed.field1 + "</td>"); }
                             if (feed.hasOwnProperty('field2')) { $new_row.append("<td>" + feed.field2 + "</td>"); }
@@ -128,18 +128,18 @@
                             if (iotParams['status']) {
                                 $new_row.append("<td>" + feed.status + "</td>");
                             }
-							
-							// add the row to the table
-							$('#output').prepend($new_row);
-							
-							// set the background color to green
-							$new_row.css('background-color', '#efe');
-							
-							// remove the background color after 500ms
-							// css transitions are used with the feed-row class to make this smooth
-							setTimeout(function() {
-								$new_row.css('background-color', '');
-							}, 500);
+
+                            // add the row to the table
+                            $('#output').prepend($new_row);
+
+                            // set the background color to green
+                            $new_row.css('background-color', '#efe');
+
+                            // remove the background color after 500ms
+                            // css transitions are used with the feed-row class to make this smooth
+                            setTimeout(function() {
+                                $new_row.css('background-color', '');
+                            }, 500);
 
                         }
 
