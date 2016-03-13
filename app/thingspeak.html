@@ -17,9 +17,9 @@
         var updates = null;
 
         // setup IoT service details and defaults
-        var iotURL = "https://api.thingspeak.com";
         var iotParams = {};
 
+        iotParams['url'] = 'https://api.thingspeak.com';
         iotParams['channel'] = 9;
         iotParams['read_api_key'] = 'GM7T1VBPSLT5EV0L';
         iotParams['results'] = 5;
@@ -46,7 +46,7 @@
         function getUpdates() {
 
             // get the data with a webservice call
-            $.getJSON( iotURL + '/channels/' + iotParams['channel'] + '/feed.json?results=' + iotParams['results'] + '&location=' + iotParams['location'] + '&status=' + iotParams['status'] + '&api_key=' + iotParams['read_api_key'], function( data ) {
+            $.getJSON( iotParams['url'] + '/channels/' + iotParams['channel'] + '/feed.json?results=' + iotParams['results'] + '&location=' + iotParams['location'] + '&status=' + iotParams['status'] + '&api_key=' + iotParams['read_api_key'], function( data ) {
 
                 // create table and headers if channel object exists
                 if (data.channel) {
@@ -259,9 +259,13 @@
     </nav>
 
     <div class="container">
+
+        <div class="page-header">
+            <h1>ThingSpeak Logger</h1>
+        </div>
+
         <div class="panel panel-default">
             <div class="panel-heading">
-
                 <div class="row">
                     <div class="col-lg-3">
                         <div class="input-group">
