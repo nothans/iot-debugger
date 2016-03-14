@@ -6,6 +6,88 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/jquery/1.12.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+
+        // setup time for updates
+        var updates = null;
+
+        // setup particle settings
+        var particle = {};
+
+        // check local storage for particle settings
+        if (localStorage.getItem('particle')) {
+
+            particle = JSON.parse(localStorage.getItem('particle'));
+
+        }
+
+        $(document).ready(function() {
+
+        	// set settings
+            $('#access_token').val(particle['access_token']);
+
+        	// when inputs change update params and clear output
+            $( ".form-control" ).change(function(input) {
+
+                // update settings
+                particle['access_token'] = $('#access_token').val();
+
+                // save to local storage
+                localStorage.setItem('particle', JSON.stringify(particle));
+
+                // clear output
+                $('#header').html('');
+                $('#output').html('');
+
+            });
+
+        });
+
+        function getWebhooks() {
+
+			// clear output
+            $('#header').html('');
+            $('#output').html('');
+
+            // get webhooks from Particle API
+            $.getJSON('https://api.particle.io/v1/webhooks?access_token=' + particle['access_token'], function(data) {
+
+            	// set header
+                $('#header').html('<b>Webhooks</b>');
+
+                // add head to output table
+                $('#output').append("<thead><tr></tr></thead>");
+
+                // add header
+                $('#output').find('thead').append("<th>id</th>");
+                $('#output').find('thead').append("<th>created_at</th>");
+                $('#output').find('thead').append("<th>event</th>");
+                $('#output').find('thead').append("<th>url</th>");
+
+                // go through each webhook and add it to the table
+                $.each(data, function(i, webhook) {
+
+                    // create a new blank row
+                    var $new_row = $("<tr id='webhook_" + webhook.id + "'></tr>");
+
+                    // add webhook detail to new row
+                    $new_row.append("<td>" + webhook.id + "</td>");
+                    $new_row.append("<td><time datetime='" + webhook.created_at + "'>" + webhook.created_at + "</time></td>");
+                    $new_row.append("<td>" + webhook.event + "</td>");
+                    $new_row.append("<td>" + webhook.url + "</td>");
+
+                    // add the row to the table
+                    $('#output').append($new_row);
+
+                });
+
+			});
+
+		}
+
+	</script>
+
 </head>
 <body>
 
@@ -26,6 +108,38 @@
                 </ul>
             </div>
     </nav>
+
+    <div class="container">
+
+        <div class="page-header">
+            <h1>Particle</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="input-group">
+                            <span class="input-group-addon">Access Token</span>
+                            <input type="text" class="form-control" id="access_token">
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <button type="button" class="btn btn-default" onClick="getWebhooks(this)">
+                            Get Webhooks
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <h1 id="header"></h1>
+
+                <table class="table table-striped" id="output"></table>
+            </div>
+        </div>
+
+    </div>
 
 </body>
 </html>
