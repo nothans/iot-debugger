@@ -86,7 +86,7 @@
                     $new_row.append("<td><button type='button' class='btn btn-danger' onClick=deleteWebhook('" + webhook.id + "')>Delete</button></td>");
 
                     // add the row to the table
-                    $('#output').append($new_row);
+                    $('#output').prepend($new_row);
 
                 });
 
@@ -117,6 +117,54 @@
     		}
 
 		}
+
+		function createWebhook(webhook_json) {
+
+			if ($('#webhook_json').val()) {
+
+				// encode webhook data
+				var webhook_json = JSON.stringify($('#webhook_json').val());
+
+				// send webhook settings to particle
+				console.log(webhook_json);
+
+				$.ajax({
+					url: 'https://api.particle.io/v1/webhooks',
+				    type: 'POST',
+				    processData: false,
+				    contentType: 'application/json',
+				    dataType: 'json',
+				    data: $('#webhook_json').val(),
+				    headers: {
+        				Authorization: 'Bearer ' + particle['access_token']
+    				},
+				    success: function(data) {
+				    	// show list of webhooks
+				        getWebhooks();
+				    }
+				});
+
+			}
+			else {
+
+				// set header
+            	$('#header').html('<b>New Webhook</b>');
+
+            	// create webhook form
+            	var webhook_form = [
+					'<div class="form-group">',
+					'	<label for="webhook_json">Content (JSON)</label>',
+					'	<textarea class="form-control" rows="10" id="webhook_json"></textarea>',
+					'</div>',
+					'<button type="submit" class="btn btn-primary" onClick="createWebhook()">Save</button>'
+				].join('');
+
+				// show webhook form
+				$('#output').html(webhook_form);
+
+			}
+
+        }
 
 	</script>
 
@@ -157,8 +205,11 @@
                         </div>
                     </div>
                     <div class="col-lg-9">
-                        <button type="button" class="btn btn-default" onClick="getWebhooks(this)">
+                        <button type="button" class="btn btn-primary" onClick="getWebhooks()">
                             Get Webhooks
+                        </button>
+                        <button type="button" class="btn btn-primary" onClick="createWebhook()">
+                            Create Webhook
                         </button>
                     </div>
                 </div>
