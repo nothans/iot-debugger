@@ -36,11 +36,15 @@
                 // save to local storage
                 localStorage.setItem('particle', JSON.stringify(particle));
 
-                // clear output
-                $('#header').html('');
-                $('#output').html('');
+                // get the webhooks
+                getWebhooks();
 
             });
+
+            // if an access token exists, get the webhooks
+            if (particle['access_token']) {
+            	getWebhooks();
+            }
 
         });
 
@@ -64,6 +68,7 @@
                 $('#output').find('thead').append("<th>created_at</th>");
                 $('#output').find('thead').append("<th>event</th>");
                 $('#output').find('thead').append("<th>url</th>");
+                $('#output').find('thead').append("<th>Actions</th>");
 
                 // go through each webhook and add it to the table
                 $.each(data, function(i, webhook) {
@@ -77,12 +82,39 @@
                     $new_row.append("<td>" + webhook.event + "</td>");
                     $new_row.append("<td>" + webhook.url + "</td>");
 
+                    // add delete button
+                    $new_row.append("<td><button type='button' class='btn btn-danger' onClick=deleteWebhook('" + webhook.id + "')>Delete</button></td>");
+
                     // add the row to the table
                     $('#output').append($new_row);
 
                 });
 
 			});
+
+		}
+
+		function deleteWebhook(webhook_id) {
+
+  			var confirmation = confirm("Delete this webhook?");
+
+  			if (confirmation) {
+
+				$.ajax({
+					url: 'https://api.particle.io/v1/webhooks/' + webhook_id + '?access_token=' + particle['access_token'],
+				    type: 'DELETE',
+				    success: function(data) {
+				    	// show list of webhooks
+				        getWebhooks();
+				    }
+				});
+
+      			return true;
+
+      		}
+  			else {
+    			return false;
+    		}
 
 		}
 
