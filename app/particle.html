@@ -24,10 +24,10 @@
 
         $(document).ready(function() {
 
-        	// set settings
+            // set settings
             $('#access_token').val(particle['access_token']);
 
-        	// when inputs change update params and clear output
+            // when inputs change update params and clear output
             $( ".form-control" ).change(function(input) {
 
                 // update settings
@@ -45,14 +45,14 @@
 
         function getWebhooks() {
 
-			// clear output
+            // clear output
             $('#header').html('');
             $('#output').html('');
 
             // get webhooks from Particle API
             $.getJSON('https://api.particle.io/v1/webhooks?access_token=' + particle['access_token'], function(data) {
 
-            	// set header
+                // set header
                 $('#header').html('<b>Webhooks</b>');
 
                 // add head to output table
@@ -85,83 +85,83 @@
 
                 });
 
-			});
-
-		}
-
-		function deleteWebhook(webhook_id) {
-
-  			var confirmation = confirm("Delete this webhook?");
-
-  			if (confirmation) {
-
-				$.ajax({
-					url: 'https://api.particle.io/v1/webhooks/' + webhook_id + '?access_token=' + particle['access_token'],
-				    type: 'DELETE',
-				    success: function(data) {
-				    	// show list of webhooks
-				        getWebhooks();
-				    }
-				});
-
-      			return true;
-
-      		}
-  			else {
-    			return false;
-    		}
-
-		}
-
-		function createWebhook(webhook_json) {
-
-			if ($('#webhook_json').val()) {
-
-				// encode webhook data
-				var webhook_json = JSON.stringify($('#webhook_json').val());
-
-				// send webhook settings to particle
-				console.log(webhook_json);
-
-				$.ajax({
-					url: 'https://api.particle.io/v1/webhooks',
-				    type: 'POST',
-				    processData: false,
-				    contentType: 'application/json',
-				    dataType: 'json',
-				    data: $('#webhook_json').val(),
-				    headers: {
-        				Authorization: 'Bearer ' + particle['access_token']
-    				},
-				    success: function(data) {
-				    	// show list of webhooks
-				        getWebhooks();
-				    }
-				});
-
-			}
-			else {
-
-				// set header
-            	$('#header').html('<b>New Webhook</b>');
-
-            	// create webhook form
-            	var webhook_form = [
-					'<div class="form-group">',
-					'	<label for="webhook_json">Content (JSON)</label>',
-					'	<textarea class="form-control" rows="10" id="webhook_json"></textarea>',
-					'</div>',
-					'<button type="submit" class="btn btn-primary" onClick="createWebhook()">Save</button>'
-				].join('');
-
-				// show webhook form
-				$('#output').html(webhook_form);
-
-			}
+            });
 
         }
 
-	</script>
+        function deleteWebhook(webhook_id) {
+
+            var confirmation = confirm("Delete this webhook?");
+
+            if (confirmation) {
+
+                $.ajax({
+                    url: 'https://api.particle.io/v1/webhooks/' + webhook_id + '?access_token=' + particle['access_token'],
+                    type: 'DELETE',
+                    success: function(data) {
+                        // show list of webhooks
+                        getWebhooks();
+                    }
+                });
+
+                return true;
+
+            }
+            else {
+                return false;
+            }
+
+        }
+
+        function createWebhook(webhook_json) {
+
+            if ($('#webhook_json').val()) {
+
+                // encode webhook data
+                var webhook_json = JSON.stringify($('#webhook_json').val());
+
+                // send webhook settings to particle
+                console.log(webhook_json);
+
+                $.ajax({
+                    url: 'https://api.particle.io/v1/webhooks',
+                    type: 'POST',
+                    processData: false,
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: $('#webhook_json').val(),
+                    headers: {
+                        Authorization: 'Bearer ' + particle['access_token']
+                    },
+                    success: function(data) {
+                        // show list of webhooks
+                        getWebhooks();
+                    }
+                });
+
+            }
+            else {
+
+                // set header
+                $('#header').html('<b>New Webhook</b>');
+
+                // create webhook form
+                var webhook_form = [
+                    '<div class="form-group">',
+                    '   <label for="webhook_json">Content (JSON)</label>',
+                    '   <textarea class="form-control" rows="10" id="webhook_json"></textarea>',
+                    '</div>',
+                    '<button type="submit" class="btn btn-primary" onClick="createWebhook()">Save</button>'
+                ].join('');
+
+                // show webhook form
+                $('#output').html(webhook_form);
+
+            }
+
+        }
+
+    </script>
 
 </head>
 <body>
