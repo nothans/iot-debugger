@@ -17,45 +17,45 @@
         var updates = null;
 
         // setup IoT service details and defaults
-        var iotParams = {};
+        var thingspeak = {};
 
-        // check local storage for iotParams
-        if (localStorage.getItem('iotParams')) {
+        // check local storage for thingspeak
+        if (localStorage.getItem('thingspeak')) {
 
-            iotParams = JSON.parse(localStorage.getItem('iotParams'));
+            thingspeak = JSON.parse(localStorage.getItem('thingspeak'));
 
         }
         else {
 
-            // set iotParams
-            iotParams['url'] = 'https://api.thingspeak.com';
-            iotParams['channel'] = 9;
-            iotParams['read_api_key'] = 'GM7T1VBPSLT5EV0L';
-            iotParams['results'] = 5;
-            iotParams['location'] = false;
-            iotParams['status'] = false;
-            iotParams['start'] = false;
+            // set thingspeak
+            thingspeak['url'] = 'https://api.thingspeak.com';
+            thingspeak['channel'] = 9;
+            thingspeak['read_api_key'] = 'GM7T1VBPSLT5EV0L';
+            thingspeak['results'] = 5;
+            thingspeak['location'] = false;
+            thingspeak['status'] = false;
+            thingspeak['start'] = false;
 
             // save to local storage
-            localStorage.setItem('iotParams', JSON.stringify(iotParams));
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
 
         }
 
         $(document).ready(function() {
 
             // set default inputs
-            $('#channel').val(iotParams['channel']);
-            $('#read_api_key').val(iotParams['read_api_key']);
+            $('#channel').val(thingspeak['channel']);
+            $('#read_api_key').val(thingspeak['read_api_key']);
 
-            if (iotParams['location']) {
+            if (thingspeak['location']) {
                 $('#location').find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
             }
 
-            if (iotParams['status']) {
+            if (thingspeak['status']) {
                 $('#status').find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
             }
 
-            if (iotParams['start']) {
+            if (thingspeak['start']) {
                 $('#start').find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
             }
 
@@ -63,11 +63,11 @@
             $( ".form-control" ).change(function(input) {
 
                 // update params
-                iotParams['channel'] = $('#channel').val();
-                iotParams['read_api_key'] = $('#read_api_key').val();
+                thingspeak['channel'] = $('#channel').val();
+                thingspeak['read_api_key'] = $('#read_api_key').val();
 
                 // save to local storage
-                localStorage.setItem('iotParams', JSON.stringify(iotParams));
+                localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
 
                 // clear output
                 $('#header').html('');
@@ -76,7 +76,7 @@
             });
 
             // start updates if play button is active
-            if (iotParams['start']) {
+            if (thingspeak['start']) {
 
                 // start updates
                 getUpdates();
@@ -91,7 +91,7 @@
         function getUpdates() {
 
             // get the data with a webservice call
-            $.getJSON( iotParams['url'] + '/channels/' + iotParams['channel'] + '/feed.json?results=' + iotParams['results'] + '&location=' + iotParams['location'] + '&status=' + iotParams['status'] + '&api_key=' + iotParams['read_api_key'], function( data ) {
+            $.getJSON( thingspeak['url'] + '/channels/' + thingspeak['channel'] + '/feed.json?results=' + thingspeak['results'] + '&location=' + thingspeak['location'] + '&status=' + thingspeak['status'] + '&api_key=' + thingspeak['read_api_key'], function( data ) {
 
                 // create table and headers if channel object exists
                 if (data.channel) {
@@ -119,14 +119,14 @@
                         if (data.channel.hasOwnProperty('field8')) { $('#output').find('thead').append("<th>Field 8</th>"); }
 
                         // add location fields if included
-                        if (iotParams['location']) {
+                        if (thingspeak['location']) {
                             $('#output').find('thead').append("<th>Latitude</th>");
                             $('#output').find('thead').append("<th>Longitude</th>");
                             $('#output').find('thead').append("<th>Elevation</th>");
                         }
 
                         // add status field if included
-                        if (iotParams['status']) {
+                        if (thingspeak['status']) {
                             $('#output').find('thead').append("<th>Status</th>");
                         }
 
@@ -163,14 +163,14 @@
                             if (feed.hasOwnProperty('field8')) { $new_row.append("<td>" + feed.field8 + "</td>"); }
 
                             // add location data if included
-                            if (iotParams['location']) {
+                            if (thingspeak['location']) {
                                 $new_row.append("<td>" + feed.latitude + "</td>");
                                 $new_row.append("<td>" + feed.longitude + "</td>");
                                 $new_row.append("<td>" + feed.elevation + "</td>");
                             }
 
                             // add status data if included
-                            if (iotParams['status']) {
+                            if (thingspeak['status']) {
                                 $new_row.append("<td>" + feed.status + "</td>");
                             }
 
@@ -206,7 +206,7 @@
                 $(button).find(".glyphicon").removeClass("glyphicon-pause").addClass("glyphicon-play");
 
                 // update params
-                iotParams['start'] = false;
+                thingspeak['start'] = false;
 
                 // stop updates
                 clearInterval(updates);
@@ -218,7 +218,7 @@
                 $(button).find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
 
                 // update params
-                iotParams['start'] = true;
+                thingspeak['start'] = true;
 
                 // start updates
                 getUpdates();
@@ -229,7 +229,7 @@
             }
 
             // save to local storage
-            localStorage.setItem('iotParams', JSON.stringify(iotParams));
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
 
         }
 
@@ -243,7 +243,7 @@
                 $(button).find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
 
                 // update params
-                iotParams['location'] = true;
+                thingspeak['location'] = true;
 
                 // clear output table
                 $('#output').html('');
@@ -255,7 +255,7 @@
                 $(button).find(".glyphicon").removeClass("glyphicon-check").addClass("glyphicon-unchecked");
 
                 // update params
-                iotParams['location'] = false;
+                thingspeak['location'] = false;
 
                 // clear output table
                 $('#output').html('');
@@ -263,7 +263,7 @@
             }
 
             // save to local storage
-            localStorage.setItem('iotParams', JSON.stringify(iotParams));
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
 
         }
 
@@ -277,7 +277,7 @@
                 $(button).find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
 
                 // update params
-                iotParams['status'] = true;
+                thingspeak['status'] = true;
 
                 // clear output table
                 $('#output').html('');
@@ -289,7 +289,7 @@
                 $(button).find(".glyphicon").removeClass("glyphicon-check").addClass("glyphicon-unchecked");
 
                 // update params
-                iotParams['status'] = false;
+                thingspeak['status'] = false;
 
                 // clear output table
                 $('#output').html('');
@@ -297,7 +297,7 @@
             }
 
             // save to local storage
-            localStorage.setItem('iotParams', JSON.stringify(iotParams));
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
 
         }
 
@@ -318,6 +318,7 @@
             <div class="collapse navbar-collapse" id="iotNavBar">
                 <ul class="nav navbar-nav">
                     <li class="active"><a href="thingspeak.html">ThingSpeak</a></li>
+                    <li><a href="particle.html">Particle</a></li>
                 </ul>
             </div>
     </nav>
@@ -331,7 +332,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="row">
-                    <div class="col-lg-3">
+                    <div class="col-lg-2">
                         <div class="input-group">
                             <span class="input-group-addon">Channel</span>
                             <input type="text" class="form-control" id="channel">
@@ -343,7 +344,7 @@
                             <input type="text" class="form-control" id="read_api_key">
                         </div>
                     </div>
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <button type="button" class="btn btn-default" onClick="includeLocation(this)" id="location">
                             <span class="glyphicon glyphicon-unchecked"></span> Location
                         </button>
@@ -352,7 +353,7 @@
                             <span class="glyphicon glyphicon-unchecked"></span> Status
                         </button>
 
-                        <button type="button" class="btn btn-default" onClick="playPause(this)" id="start">
+                        <button type="button" class="btn btn-primary" onClick="playPause(this)" id="start">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
