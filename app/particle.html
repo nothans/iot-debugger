@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IoT Debugger - Particle</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/jquery/1.12.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+
+        // setup time for updates
+        var updates = null;
+
+        // setup particle settings
+        var particle = {};
+
+        // check local storage for particle settings
+        if (localStorage.getItem('particle')) {
+
+            particle = JSON.parse(localStorage.getItem('particle'));
+
+        }
+
+        $(document).ready(function() {
+
+            // set settings
+            $('#access_token').val(particle['access_token']);
+
+            // when inputs change update params and clear output
+            $( ".form-control" ).change(function(input) {
+
+                // update settings
+                particle['access_token'] = $('#access_token').val();
+
+                // save to local storage
+                localStorage.setItem('particle', JSON.stringify(particle));
+
+                // get the webhooks
+                getWebhooks();
+
+            });
+
+        });
+
+        function getWebhooks() {
+
+            // clear output
+            $('#header').html('');
+            $('#output').html('');
+
+            // get webhooks from Particle API
+            $.getJSON('https://api.particle.io/v1/webhooks?access_token=' + particle['access_token'], function(data) {
+
+                // set header
+                $('#header').html('<b>Webhooks</b>');
+
+                // if account has webhooks, display them
+                if (data[0]) {
+
+                    // add head to output table
+                    $('#output').append("<thead><tr></tr></thead>");
+
+                    // add header
+                    $('#output').find('thead').append("<th>id</th>");
+                    $('#output').find('thead').append("<th>created_at</th>");
+                    $('#output').find('thead').append("<th>event</th>");
+                    $('#output').find('thead').append("<th>url</th>");
+                    $('#output').find('thead').append("<th>Actions</th>");
+
+                }
+                else {
+
+                    $('#output').html('No webhooks found - <a onClick="createWebhook()">create a new webhook</a>.');
+
+                }
+
+                // go through each webhook and add it to the table
+                $.each(data, function(i, webhook) {
+
+                    // create a new blank row
+                    var $new_row = $("<tr id='webhook_" + webhook.id + "'></tr>");
+
+                    // add webhook detail to new row
+                    $new_row.append("<td>" + webhook.id + "</td>");
+                    $new_row.append("<td><time datetime='" + webhook.created_at + "'>" + webhook.created_at + "</time></td>");
+                    $new_row.append("<td>" + webhook.event + "</td>");
+                    $new_row.append("<td>" + webhook.url + "</td>");
+
+                    // add delete button
+                    $new_row.append("<td><button type='button' class='btn btn-danger' onClick=deleteWebhook('" + webhook.id + "')>Delete</button></td>");
+
+                    // add the row to the table
+                    $('#output').prepend($new_row);
+
+                });
+
+            });
+
+        }
+
+        function deleteWebhook(webhook_id) {
+
+            var confirmation = confirm("Delete this webhook?");
+
+            if (confirmation) {
+
+                $.ajax({
+                    url: 'https://api.particle.io/v1/webhooks/' + webhook_id + '?access_token=' + particle['access_token'],
+                    type: 'DELETE',
+                    success: function(data) {
+                        // show list of webhooks
+                        getWebhooks();
+                    }
+                });
+
+                return true;
+
+            }
+            else {
+                return false;
+            }
+
+        }
+
+        function createWebhook(webhook_json) {
+
+            if ($('#webhook_json').val()) {
+
+                // encode webhook data
+                var webhook_json = JSON.stringify($('#webhook_json').val());
+
+                // send webhook settings to particle
+                console.log(webhook_json);
+
+                $.ajax({
+                    url: 'https://api.particle.io/v1/webhooks',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: $('#webhook_json').val(),
+                    headers: {
+                        Authorization: 'Bearer ' + particle['access_token']
+                    },
+                    success: function(data) {
+                        // show list of webhooks
+                        getWebhooks();
+                    }
+                });
+
+            }
+            else {
+
+                // set header
+                $('#header').html('<b>New Webhook</b>');
+
+                // create webhook form
+                var webhook_form = [
+                    '<div class="form-group">',
+                    '   <label for="webhook_json">Content (JSON)</label>',
+                    '   <textarea class="form-control" rows="10" id="webhook_json"></textarea>',
+                    '</div>',
+                    '<button type="submit" class="btn btn-primary" onClick="createWebhook()">Save</button>'
+                ].join('');
+
+                // show webhook form
+                $('#output').html(webhook_form);
+
+            }
+
+        }
+
+    </script>
+
+</head>
+<body>
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#iotNavBar">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">IoT Debugger</a>
+            </div>
+            <div class="collapse navbar-collapse" id="iotNavBar">
+                <ul class="nav navbar-nav">
+                    <li><a href="thingspeak.html">ThingSpeak</a></li>
+                    <li class="active"><a href="particle.html">Particle</a></li>
+                </ul>
+            </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="page-header">
+            <h1>Particle</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="input-group">
+                            <span class="input-group-addon">Access Token</span>
+                            <input type="text" class="form-control" id="access_token">
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <button type="button" class="btn btn-primary" onClick="getWebhooks()">
+                            Get Webhooks
+                        </button>
+                        <button type="button" class="btn btn-primary" onClick="createWebhook()">
+                            Create Webhook
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <h1 id="header"></h1>
+
+                <table class="table table-striped" id="output"></table>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
