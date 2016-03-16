@@ -55,15 +55,25 @@
                 // set header
                 $('#header').html('<b>Webhooks</b>');
 
-                // add head to output table
-                $('#output').append("<thead><tr></tr></thead>");
+                // if account has webhooks, display them
+                if (data[0]) {
 
-                // add header
-                $('#output').find('thead').append("<th>id</th>");
-                $('#output').find('thead').append("<th>created_at</th>");
-                $('#output').find('thead').append("<th>event</th>");
-                $('#output').find('thead').append("<th>url</th>");
-                $('#output').find('thead').append("<th>Actions</th>");
+                    // add head to output table
+                    $('#output').append("<thead><tr></tr></thead>");
+
+                    // add header
+                    $('#output').find('thead').append("<th>id</th>");
+                    $('#output').find('thead').append("<th>created_at</th>");
+                    $('#output').find('thead').append("<th>event</th>");
+                    $('#output').find('thead').append("<th>url</th>");
+                    $('#output').find('thead').append("<th>Actions</th>");
+
+                }
+                else {
+
+                    $('#output').html('No webhooks found - <a onClick="createWebhook()">create a new webhook</a>.');
+
+                }
 
                 // go through each webhook and add it to the table
                 $.each(data, function(i, webhook) {
@@ -126,7 +136,6 @@
                 $.ajax({
                     url: 'https://api.particle.io/v1/webhooks',
                     type: 'POST',
-                    processData: false,
                     contentType: 'application/json',
                     dataType: 'json',
                     data: $('#webhook_json').val(),
