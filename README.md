@@ -16,5 +16,5 @@ Use this simple web-based tool to see data stored in an Internet of Things data 
 * ThingSpeak Data Logger
 * Particle.io Webhooks Manager
 * Settings are saved in LocalStorage
-* Build using HTML5, Bootstrap, and jQuery
+* Built using HTML5, Bootstrap, and jQuery
 * Open Source!
