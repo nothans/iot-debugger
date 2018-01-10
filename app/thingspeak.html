@@ -9,6 +9,7 @@
 
     <style type="text/css">
       .feed-row { transition: background-color 2s ease; }
+      .rgb-cell { transition: color 0.5s ease, background-color 0.5s ease; }
     </style>
 
     <script type="text/javascript">
@@ -153,14 +154,14 @@
                             $new_row.append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
 
                             // add field data to each field
-                            if (feed.hasOwnProperty('field1')) { $new_row.append("<td>" + feed.field1 + "</td>"); }
-                            if (feed.hasOwnProperty('field2')) { $new_row.append("<td>" + feed.field2 + "</td>"); }
-                            if (feed.hasOwnProperty('field3')) { $new_row.append("<td>" + feed.field3 + "</td>"); }
-                            if (feed.hasOwnProperty('field4')) { $new_row.append("<td>" + feed.field4 + "</td>"); }
-                            if (feed.hasOwnProperty('field5')) { $new_row.append("<td>" + feed.field5 + "</td>"); }
-                            if (feed.hasOwnProperty('field6')) { $new_row.append("<td>" + feed.field6 + "</td>"); }
-                            if (feed.hasOwnProperty('field7')) { $new_row.append("<td>" + feed.field7 + "</td>"); }
-                            if (feed.hasOwnProperty('field8')) { $new_row.append("<td>" + feed.field8 + "</td>"); }
+                            if (feed.hasOwnProperty('field1')) { $new_row.append(getTableElement(feed.field1)); }
+                            if (feed.hasOwnProperty('field2')) { $new_row.append(getTableElement(feed.field2)); }
+                            if (feed.hasOwnProperty('field3')) { $new_row.append(getTableElement(feed.field3)); }
+                            if (feed.hasOwnProperty('field4')) { $new_row.append(getTableElement(feed.field4)); }
+                            if (feed.hasOwnProperty('field5')) { $new_row.append(getTableElement(feed.field5)); }
+                            if (feed.hasOwnProperty('field6')) { $new_row.append(getTableElement(feed.field6)); }
+                            if (feed.hasOwnProperty('field7')) { $new_row.append(getTableElement(feed.field7)); }
+                            if (feed.hasOwnProperty('field8')) { $new_row.append(getTableElement(feed.field8)); }
 
                             // add location data if included
                             if (thingspeak['location']) {
@@ -194,6 +195,57 @@
 
             });
 
+        }
+
+        function getTableElement(content) {
+
+          // create a table element containing the given content
+          var $td = $('<td>' + content + '</td>');
+
+          // regex pattern to match RGB hex values
+          // remove preceding ^ to match colors within text
+          var rgbPattern = /^#(([a-f\d]{2}){3})$/i;
+
+          // check content for a color
+          if (rgbPattern.test(content)) {
+
+            // extract that color
+            var color = rgbPattern.exec(content)[0];
+
+            // mark the cell as a rgb-cell for the CSS transitions
+            $td.addClass('rgb-cell');
+
+            // set the cell's background color to the hex color
+            $td.css('background-color', color);
+
+            // determine whether to set the font to white or black depending on the hex color
+            $td.css('color', useDarkFont(color) ? '#000' : '#fff');
+
+            // remove background and text color when hovering and restore when mouse exits
+            $td.hover(
+              function() {
+                $td.css('background-color', '');
+                $td.css('color', '');
+              },
+              function() {
+                $td.css('background-color', color);
+                $td.css('color', useDarkFont(color) ? '#000' : '#fff');
+              });
+          }
+
+          return $td;
+        }
+
+        // tweaked from https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
+        function useDarkFont(color) {
+
+          // regex to separate RGB components
+          var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+
+          // Counting the perceptive luminance - human eye favors green color...
+          var a = 1 - ( 0.299 * parseInt(result[1], 16) + 0.587 * parseInt(result[2], 16) + 0.114 * parseInt(result[3], 16)) / 255;
+
+          return a < 0.5;
         }
 
         // start / stop updates
