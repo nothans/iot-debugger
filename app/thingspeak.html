@@ -8,8 +8,9 @@
     <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
     <style type="text/css">
-      .feed-row { transition: background-color 2s ease; }
-      .rgb-cell { transition: color 0.5s ease, background-color 0.5s ease; }
+        .feed-row { transition: background-color 2s ease; }
+        .rgb-cell { transition: color 0.5s ease, background-color 0.5s ease; }
+        input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: searchfield-cancel-button; }
     </style>
 
     <script type="text/javascript">
@@ -47,6 +48,8 @@
             // set default inputs
             $('#channel').val(thingspeak['channel']);
             $('#read_api_key').val(thingspeak['read_api_key']);
+            $('#user_api_key').val(thingspeak['user_api_key']);
+            $('#tag').val(thingspeak['tag']);
 
             if (thingspeak['location']) {
                 $('#location').find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
@@ -60,21 +63,11 @@
                 $('#start').find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
             }
 
-            // when inputs change update params and clear output
-            $( ".form-control" ).change(function(input) {
+            // when feed inputs change update params and clear output
+            $( ".feed-form" ).change(updateFeedParams);
 
-                // update params
-                thingspeak['channel'] = $('#channel').val();
-                thingspeak['read_api_key'] = $('#read_api_key').val();
-
-                // save to local storage
-                localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
-
-                // clear output
-                $('#header').html('');
-                $('#output').html('');
-
-            });
+            // when channel inputs change update params
+            $( ".channel-form" ).change(updateChannelParams);
 
             // start updates if play button is active
             if (thingspeak['start']) {
@@ -87,7 +80,48 @@
 
             }
 
+            // list channels if user api key is provided
+            if (thingspeak['user_api_key']) {
+
+                // find channels
+                refreshChannels();
+            }
+
         });
+
+        function updateFeedParams() {
+
+            // update params
+            thingspeak['channel'] = $('#channel').val();
+            thingspeak['read_api_key'] = $('#read_api_key').val();
+
+            // save to local storage
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
+
+            // clear output
+            $('#header').html('');
+            $('#output').html('');
+
+        }
+
+        function updateChannelParams() {
+
+            // update params
+            thingspeak['user_api_key'] = $('#user_api_key').val();
+            thingspeak['tag'] = $('#tag').val();
+
+            if (thingspeak['user_api_key']) {
+                // refresh channels if user key is present
+                refreshChannels();
+            } else {
+                // clear display if user key is not present
+                $('#channels-header').html('');
+                $('#channels').html('');
+            }
+
+            // save to local storage
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
+        }
 
         function getUpdates() {
 
@@ -199,15 +233,15 @@
 
         function getTableElement(content) {
 
-          // create a table element containing the given content
-          var $td = $('<td>' + content + '</td>');
+            // create a table element containing the given content
+            var $td = $('<td>' + content + '</td>');
 
-          // regex pattern to match RGB hex values
-          // remove preceding ^ to match colors within text
-          var rgbPattern = /^#(([a-f\d]{2}){3})$/i;
+            // regex pattern to match RGB hex values
+            // remove preceding ^ to match colors within text
+            var rgbPattern = /^#(([a-f\d]{2}){3})$/i;
 
-          // check content for a color
-          if (rgbPattern.test(content)) {
+            // check content for a color
+            if (rgbPattern.test(content)) {
 
             // extract that color
             var color = rgbPattern.exec(content)[0];
@@ -223,17 +257,124 @@
 
             // remove background and text color when hovering and restore when mouse exits
             $td.hover(
-              function() {
-                $td.css('background-color', '');
-                $td.css('color', '');
-              },
-              function() {
-                $td.css('background-color', color);
-                $td.css('color', useDarkFont(color) ? '#000' : '#fff');
-              });
-          }
+                function() {
+                    $td.css('background-color', '');
+                    $td.css('color', '');
+                },
+                function() {
+                    $td.css('background-color', color);
+                    $td.css('color', useDarkFont(color) ? '#000' : '#fff');
+                });
+            }
 
-          return $td;
+            return $td;
+        }
+
+
+        function refreshChannels() {
+            var tagQuery = thingspeak['tag'] ? '&tag=' + encodeURIComponent(thingspeak['tag']) : '';
+
+            $.getJSON( thingspeak['url'] + '/channels.json?api_key=' + thingspeak['user_api_key'] + tagQuery, function( data ) {
+
+                // set channel header including tag if present
+                $('#channels-header').html('Channels' + (thingspeak['tag'] ? ' for Tag: ' + thingspeak['tag'] : ''));
+
+                // clear old channel data
+                $('#channels').html('<table');
+
+                // create table head
+                var $table_header = $('<thead></thead>');
+                var $header_row = $('<tr></tr>');
+
+                // add column titles
+                $header_row.append($('<th>Channel Name</th>'));
+                $header_row.append($('<th>ID</th>'));
+                $header_row.append($('<th>Tags</th>'));
+
+                $table_header.append($header_row);
+
+                // add table head
+                $('#channels').append($table_header);
+
+                // add a row for each channel
+                $.each( data, function( i, channel ) {
+
+                    // create a new row
+                    var $new_row = $("<tr class='channel-row'></tr>");
+
+                    // create the channel name link element
+                    var $name_link = $("<a href='#'><b>" + channel.name + "</b></a>");
+
+                    // add an onClick event to the name link
+                    $name_link.click(function( event ) {
+                        // prevent navigation
+                        event.preventDefault();
+
+                        // find channel's read key
+                        var readKey = channel.api_keys.find(function ( key ) {
+                            return key.write_flag;
+                        })
+
+                        // update forms with this channel's id and key
+                        $('#channel').val(channel.id);
+                        $('#read_api_key').val(readKey.api_key);
+
+                        // update configuration and get feed
+                        updateFeedParams();
+                        getUpdates();
+                    })
+
+                    // wrap the name link
+                    var $name_item = $('<td></td>');
+                    $name_item.append($name_link);
+
+                    // add channel name to row
+                    $new_row.append($name_item);
+
+                    // add channel id to row
+                    $new_row.append("<td>" + channel.id + "</td>");
+
+                    // wrap tag links
+                    var $tag_item = $('<td></td>');
+                    $tag_item.append(listTags(channel.tags));
+
+                    // add tag links to row
+                    $new_row.append($tag_item);
+
+                    // add the row to the table
+                    $('#channels').append($new_row);
+
+                });
+            });
+        }
+
+        function listTags(tags) {
+            // create the list container
+            var $list = $('<span></span>');
+
+            // iterate through each tag
+            $.each(tags, function ( i, tag ) {
+                // create a link with the tag's name
+                var $link = $('<a href="#">' + tag.name + '</a>');
+
+                // make the tag bold if it's the currently searched tag
+                if (tag.name.toUpperCase() === thingspeak['tag'].toUpperCase()) {
+                    $link.css("font-weight","Bold");
+                }
+
+                // add an onClick event that filter's the user's channels by tag
+                $link.click(function ( event ) {
+                    event.preventDefault();
+
+                    $('#tag').val(tag.name);
+                    updateChannelParams();
+                });
+
+                // add the tag to the list with a comma if it isn't the last tag
+                $list.append($link).append($('<span>' + (i < tags.length - 1 ? ', ' : '') + '</span>'));
+            })
+
+            return $list;
         }
 
         // tweaked from https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
@@ -387,13 +528,13 @@
                     <div class="col-lg-2">
                         <div class="input-group">
                             <span class="input-group-addon">Channel</span>
-                            <input type="text" class="form-control" id="channel">
+                            <input type="text" class="form-control feed-form" id="channel">
                         </div>
                     </div>
                     <div class="col-lg-4">
                         <div class="input-group">
                             <span class="input-group-addon">Read API Key</span>
-                            <input type="text" class="form-control" id="read_api_key">
+                            <input type="text" class="form-control feed-form" id="read_api_key">
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -418,6 +559,37 @@
                 <table class="table table-striped" id="output"></table>
             </div>
         </div>
+
+        <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="input-group">
+                                <span class="input-group-addon">User API Key</span>
+                                <input type="text" class="form-control channel-form" id="user_api_key">
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="input-group">
+                                <span class="input-group-addon">Tag</span>
+                                <input type="search" class="form-control channel-form" id="tag">
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <button type="button" class="btn btn-primary" onClick="refreshChannels()" id="refresh_channels">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <h3 id="channels-header"></h3>
+
+                    <table class="table table-striped" id="channels"></table>
+                </div>
+            </div>
+
     </div>
 
 </body>
