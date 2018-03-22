@@ -345,6 +345,10 @@
                     $('#channels').append($new_row);
 
                 });
+
+                // expand channel panel
+                showChannelPanel();
+
             });
         }
 
@@ -494,6 +498,44 @@
 
         }
 
+        // toggle for channel info panel
+        function toggleChannelPanel(button) {
+
+            // switch button state and show/hide panel
+            if ($(button).find(".glyphicon").hasClass("glyphicon-plus")) {
+
+                // call helper show function
+                showChannelPanel();
+
+            }
+            else {
+
+                // call helper hide function
+                hideChannelPanel();
+
+            }
+        }
+
+        function showChannelPanel() {
+
+            // show minus button state
+            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-plus").addClass("glyphicon-minus");
+
+            // show panel
+            $('#channel-panel').collapse('show');
+
+        }
+
+        function hideChannelPanel() {
+
+            // show plus button state
+            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-minus").addClass("glyphicon-plus");
+
+            // hide panel
+            $('#channel-panel').collapse('hide');
+
+        }
+
       </script>
 </head>
 <body>
@@ -520,6 +562,43 @@
 
         <div class="page-header">
             <h1>ThingSpeak Logger</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-addon">User API Key</span>
+                            <input type="text" class="form-control channel-form" id="user_api_key">
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-addon">Tag</span>
+                            <input type="search" class="form-control channel-form" id="tag">
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <button type="button" class="btn btn-primary" onClick="refreshChannels()" id="refresh_channels">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </button>
+                        <span style="float:right">
+                            <button type="button" class="btn btn-default" onClick="toggleChannelPanel(this)" id="toggle-channel-panel">
+                                <span class="glyphicon glyphicon-plus"></span>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-collapse collapse" id="channel-panel">
+                <div class="panel-body">
+                    <h3 id="channels-header"></h3>
+
+                    <table class="table table-striped" id="channels"></table>
+                </div>
+            </div>
         </div>
 
         <div class="panel panel-default">
@@ -559,36 +638,6 @@
                 <table class="table table-striped" id="output"></table>
             </div>
         </div>
-
-        <div class="panel panel-default">
-                <div class="panel-heading">
-                    <div class="row">
-                        <div class="col-lg-4">
-                            <div class="input-group">
-                                <span class="input-group-addon">User API Key</span>
-                                <input type="text" class="form-control channel-form" id="user_api_key">
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="input-group">
-                                <span class="input-group-addon">Tag</span>
-                                <input type="search" class="form-control channel-form" id="tag">
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <button type="button" class="btn btn-primary" onClick="refreshChannels()" id="refresh_channels">
-                                <span class="glyphicon glyphicon-refresh"></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-body">
-                    <h3 id="channels-header"></h3>
-
-                    <table class="table table-striped" id="channels"></table>
-                </div>
-            </div>
 
     </div>
 
