@@ -293,31 +293,21 @@
                     return;
                 }
 
-                // create table head
-                var $table_header = $('<thead></thead>');
-                var $header_row = $('<tr></tr>');
-
-                // add column titles
-                $header_row.append($('<th>Channel Name</th>'));
-                $header_row.append($('<th>ID</th>'));
-                $header_row.append($('<th>Tags</th>'));
-
-                $table_header.append($header_row);
-
-                // add table head
-                $('#channels').append($table_header);
-
                 // add a row for each channel
                 $.each( data, function( i, channel ) {
 
                     // create a new row
-                    var $new_row = $("<tr class='channel-row'></tr>");
+                    var $new_item = $("<li class='list-group-item channel-row'></li>");
+
+                    $new_item.append($('<div class="text-muted" style="float:right">ID: ' + channel.id + '<br />' + (channel.public_flag ? 'Public' : 'Private') + '</div>'))
+
+                    var $title = $('<span></span>');
 
                     // create the channel name link element
-                    var $name_link = $("<a href='#'><b>" + channel.name + "</b></a>");
+                    var $title_link = $('<h4 class="list-group-item-heading"><a href="#">' + channel.name + '</a></h4>');
 
                     // add an onClick event to the name link
-                    $name_link.click(function( event ) {
+                    $title_link.click(function( event ) {
                         // prevent navigation
                         event.preventDefault();
 
@@ -335,25 +325,29 @@
                         getUpdates();
                     })
 
-                    // wrap the name link
-                    var $name_item = $('<td></td>');
-                    $name_item.append($name_link);
+                    $title.append($title_link);
 
                     // add channel name to row
-                    $new_row.append($name_item);
+                    $new_item.append($title);
 
-                    // add channel id to row
-                    $new_row.append("<td>" + channel.id + "</td>");
-
-                    // wrap tag links
-                    var $tag_item = $('<td></td>');
+                    // wrap tag links and add icon
+                    var $tag_item = $('<p class="list-group-item-text"><span class="glyphicon glyphicon-tags" />&nbsp;&nbsp;</p>');
                     $tag_item.append(listTags(channel.tags));
 
+                    // add placeholder if no tags are present
+                    if (channel.tags.length === 0) {
+                        $tag_item.append('<span class="text-muted">None</span>')
+                    }
+
                     // add tag links to row
-                    $new_row.append($tag_item);
+                    $new_item.append($tag_item);
+
+                    if (channel.description && channel.description !== "") {
+                        $new_item.append($('<div class="text-muted">' + channel.description + '</div>'));
+                    }
 
                     // add the row to the table
-                    $('#channels').append($new_row);
+                    $('#channels').append($new_item);
 
                 });
 
