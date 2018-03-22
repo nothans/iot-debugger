@@ -276,11 +276,22 @@
 
             $.getJSON( thingspeak['url'] + '/channels.json?api_key=' + thingspeak['user_api_key'] + tagQuery, function( data ) {
 
-                // set channel header including tag if present
-                $('#channels-header').html('Channels' + (thingspeak['tag'] ? ' for Tag: ' + thingspeak['tag'] : ''));
-
                 // clear old channel data
-                $('#channels').html('<table');
+                $('#channels').empty();
+
+                if (data.length > 0) {
+
+                    // set channel header including tag if present
+                    $('#channels-header').html('Channels' + (thingspeak['tag'] ? ' with Tag: ' + thingspeak['tag'] : ''));
+
+                } else {
+
+                    // set channel header including tag if present
+                    $('#channels-header').html('No Channels Found' + (thingspeak['tag'] ? ' with Tag: ' + thingspeak['tag'] : ''));
+
+                    // return so no table is drawn
+                    return;
+                }
 
                 // create table head
                 var $table_header = $('<thead></thead>');
@@ -576,7 +587,7 @@
                     <div class="col-lg-4">
                         <div class="input-group">
                             <span class="input-group-addon">Tag</span>
-                            <input type="search" class="form-control channel-form" id="tag">
+                            <input type="search" class="form-control channel-form" id="tag" placeholder="Filter by tag">
                         </div>
                     </div>
                     <div class="col-lg-4">
