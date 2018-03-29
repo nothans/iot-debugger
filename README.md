@@ -13,7 +13,7 @@ Use this simple web-based tool to see data stored in an Internet of Things data 
 * To use Particle - Enter the Access Token for the Particle.io Build Account
 
 ## Features
-* ThingSpeak Data Logger
+* ThingSpeak Data Logger and Channel Browser
 * Particle.io Webhooks Manager
 * Settings are saved in LocalStorage
 * Built using HTML5, Bootstrap, and jQuery
