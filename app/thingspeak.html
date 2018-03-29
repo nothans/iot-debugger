@@ -80,11 +80,15 @@
 
             }
 
-            // list channels if user api key is provided
+            // check if a user api key is available
             if (thingspeak['user_api_key']) {
-
-                // find channels
+                // hide user key prompt and load channels
+                $('#user-api-prompt').hide();
                 refreshChannels();
+            }
+            else {
+                // show channel config panel
+                showConfigureChannelPanel();
             }
 
         });
@@ -110,13 +114,30 @@
             thingspeak['user_api_key'] = $('#user_api_key').val();
             thingspeak['tag'] = $('#tag').val();
 
+            // check if user api key is present
             if (thingspeak['user_api_key']) {
-                // refresh channels if user key is present
+
+                // refresh channels
                 refreshChannels();
+
+                // hide prompt to enter key
+                $('#user-api-prompt').hide();
+
+                // hide API key panel
+                hideConfigureChannelPanel();
+
+                // expand channel panel
+                showChannelPanel();
+
             } else {
-                // clear display if user key is not present
+
+                // clear display
                 $('#channels-header').html('');
                 $('#channels').html('');
+
+                // show prompt to enter key
+                $('#user-api-prompt').show();
+
             }
 
             // save to local storage
@@ -320,9 +341,15 @@
                         $('#channel').val(channel.id);
                         $('#read_api_key').val(readKey.api_key);
 
-                        // update configuration and get feed
+                        // update configuration
                         updateFeedParams();
-                        getUpdates();
+
+                        // collapse channels panel
+                        hideChannelPanel();
+
+                        // start fetching updates
+                        play();
+
                     })
 
                     $title.append($title_link);
@@ -351,9 +378,6 @@
 
                 });
 
-                // expand channel panel
-                showChannelPanel();
-
             });
         }
 
@@ -371,7 +395,7 @@
                     $link.css("font-weight","Bold");
                 }
 
-                // add an onClick event that filter's the user's channels by tag
+                // add an onClick event that filters the user's channels by tag
                 $link.click(function ( event ) {
                     event.preventDefault();
 
@@ -403,32 +427,47 @@
 
             // switch button state and start or stop updates
             if ($(button).find(".glyphicon").hasClass("glyphicon-pause")) {
-
-                // show play button state
-                $(button).find(".glyphicon").removeClass("glyphicon-pause").addClass("glyphicon-play");
-
-                // update params
-                thingspeak['start'] = false;
-
-                // stop updates
-                clearInterval(updates);
-
+                pause();
             }
             else {
-
-                // show pause button state
-                $(button).find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
-
-                // update params
-                thingspeak['start'] = true;
-
-                // start updates
-                getUpdates();
-
-                // check for new updates
-                updates = setInterval('getUpdates()',5000);
-
+                play();
             }
+
+        }
+
+        function pause() {
+
+            // show play button state
+            if ($("#start").find(".glyphicon").hasClass("glyphicon-pause")) {
+                $("#start").find(".glyphicon").removeClass("glyphicon-pause").addClass("glyphicon-play");
+            }
+
+            // update params
+            thingspeak['start'] = false;
+
+            // stop updates
+            clearInterval(updates);
+
+            // save to local storage
+            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
+
+        }
+
+        function play() {
+
+            // show pause button state
+            if ($("#start").find(".glyphicon").hasClass("glyphicon-play")) {
+                $("#start").find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
+            }
+
+            // update params
+            thingspeak['start'] = true;
+
+            // start updates
+            getUpdates();
+
+            // check for new updates
+            updates = setInterval('getUpdates()',5000);
 
             // save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
@@ -507,7 +546,7 @@
         function toggleChannelPanel(button) {
 
             // switch button state and show/hide panel
-            if ($(button).find(".glyphicon").hasClass("glyphicon-plus")) {
+            if ($(button).find(".glyphicon").hasClass("glyphicon-menu-down")) {
 
                 // call helper show function
                 showChannelPanel();
@@ -524,7 +563,7 @@
         function showChannelPanel() {
 
             // show minus button state
-            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-plus").addClass("glyphicon-minus");
+            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-menu-down").addClass("glyphicon-menu-up");
 
             // show panel
             $('#channel-panel').collapse('show');
@@ -534,10 +573,31 @@
         function hideChannelPanel() {
 
             // show plus button state
-            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-minus").addClass("glyphicon-plus");
+            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-menu-up").addClass("glyphicon-menu-down");
 
             // hide panel
             $('#channel-panel').collapse('hide');
+
+        }
+
+        function toggleConfigureChannelPanel() {
+
+            // toggle channel panel configuration
+            $('#channel-panel-config').collapse('toggle');
+
+        }
+
+        function showConfigureChannelPanel() {
+
+            // show channel panel configuration
+            $('#channel-panel-config').collapse('show');
+
+        }
+
+        function hideConfigureChannelPanel() {
+
+            // hide channel panel configuration
+            $('#channel-panel-config').collapse('hide');
 
         }
 
@@ -572,25 +632,32 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="row">
-                    <div class="col-lg-4">
-                        <div class="input-group">
-                            <span class="input-group-addon">User API Key</span>
-                            <input type="text" class="form-control channel-form" id="user_api_key">
+                    <div class="col-xs-12" style="margin-bottom:10px">
+                        <div class="collapse" id="channel-panel-config">
+                            <div class="input-group">
+                                <span class="input-group-addon">User API Key</span>
+                                <input type="text" class="form-control channel-form" id="user_api_key">
+                            </div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
+
+                    <div class="col-lg-8 col-sm-6">
                         <div class="input-group">
                             <span class="input-group-addon">Tag</span>
                             <input type="search" class="form-control channel-form" id="tag" placeholder="Filter by tag">
                         </div>
                     </div>
-                    <div class="col-lg-4">
+
+                    <div class="col-lg-4 col-sm-6">
                         <button type="button" class="btn btn-primary" onClick="refreshChannels()" id="refresh_channels">
                             <span class="glyphicon glyphicon-refresh"></span>
                         </button>
                         <span style="float:right">
-                            <button type="button" class="btn btn-default" onClick="toggleChannelPanel(this)" id="toggle-channel-panel">
-                                <span class="glyphicon glyphicon-plus"></span>
+                            <button type="button" class="btn btn-default" onClick="toggleConfigureChannelPanel(this)" id="configure-channel-panel">
+                                <span class="glyphicon glyphicon-cog"></span> Configure
+                            </button>
+                            <button type="button" class="btn btn-link" onClick="toggleChannelPanel(this)" id="toggle-channel-panel">
+                                <span class="glyphicon glyphicon-menu-down"></span>
                             </button>
                         </span>
                     </div>
@@ -601,6 +668,12 @@
                 <div class="panel-body">
                     <h3 id="channels-header"></h3>
 
+                    <a href="#" id="user-api-prompt" class="text-muted" onClick="event.preventDefault(); showConfigureChannelPanel();">
+                        <div style="margin:-1em 0 -1em 0" class="well">
+                            <span class="glyphicon glyphicon-info-sign"></span>
+                            Enter a User API Key to browse channels.
+                        </div>
+                    </a>
                     <table class="table table-striped" id="channels"></table>
                 </div>
             </div>
