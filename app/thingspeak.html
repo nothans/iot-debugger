@@ -10,6 +10,8 @@
     <style type="text/css">
         .feed-row { transition: background-color 2s ease; }
         .rgb-cell { transition: color 0.5s ease, background-color 0.5s ease; }
+        .glyphicon { vertical-align: text-top; }
+        /* restore webkit search cancel (overridden by Bootstrap) */
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: searchfield-cancel-button; }
     </style>
 
@@ -110,6 +112,11 @@
 
         function updateChannelParams() {
 
+            if (!thingspeak['user_api_key'] && $('#user_api_key').val()) {
+                // hide API key panel
+                hideConfigureChannelPanel();
+            }
+
             // update params
             thingspeak['user_api_key'] = $('#user_api_key').val();
             thingspeak['tag'] = $('#tag').val();
@@ -117,14 +124,11 @@
             // check if user api key is present
             if (thingspeak['user_api_key']) {
 
-                // refresh channels
-                refreshChannels();
-
                 // hide prompt to enter key
                 $('#user-api-prompt').hide();
 
-                // hide API key panel
-                hideConfigureChannelPanel();
+                // refresh channels
+                refreshChannels();
 
                 // expand channel panel
                 showChannelPanel();
@@ -137,6 +141,11 @@
 
                 // show prompt to enter key
                 $('#user-api-prompt').show();
+
+                if (thingspeak['tag']) {
+                    // show API key panel
+                    showConfigureChannelPanel();
+                }
 
             }
 
@@ -669,12 +678,12 @@
                 <div class="panel-body">
                     <h3 id="channels-header"></h3>
 
-                    <a href="#" id="user-api-prompt" class="text-muted" onClick="event.preventDefault(); showConfigureChannelPanel();">
-                        <div style="margin:-1em 0 -1em 0" class="well">
-                            <span class="glyphicon glyphicon-info-sign"></span>
-                            Enter a User API Key to browse channels.
-                        </div>
-                    </a>
+                    <div class="well text-muted" id="user-api-prompt" onClick="showConfigureChannelPanel();" style="margin:-1em 0 -1em 0">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                        <span>Enter a User API Key to browse channels.</span>
+                        <a href="https://thingspeak.com/account/profile" target="_blank">(User API Key?)</a>
+                    </div>
+
                     <table class="table table-striped" id="channels"></table>
                 </div>
             </div>
