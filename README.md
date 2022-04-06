@@ -2,7 +2,7 @@
 Use this simple web-based tool to see data stored in an Internet of Things data service such as [ThingSpeak](https://thingspeak.com/channels/9) and [Particle.io](https://build.particle.io/signup).
 
 ## Demo
-* [Open Demo App for ThingSpeak](https://htmlpreview.github.io/?https://github.com/nothans/iot-debugger/blob/master/app/thingspeak.html)
+* [Open Demo App for ThingSpeak](https://nothans.github.io/iot-debugger/app/thingspeak.html)
 * Click play button to start getting data
 
 ## How to Use IoT Debugger
