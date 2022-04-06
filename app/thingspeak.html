@@ -46,6 +46,7 @@
             thingspeak['channel'] = 9;
             thingspeak['read_api_key'] = 'GM7T1VBPSLT5EV0L';
             thingspeak['results'] = 5;
+            thingspeak['timezone'] = 'Etc/UTC';
             thingspeak['location'] = false;
             thingspeak['status'] = false;
             thingspeak['start'] = false;
@@ -58,8 +59,11 @@
         $(document).ready(function() {
 
             // set default inputs
+            if (!thingspeak['timezone']) {thingspeak['timezone'] = 'Etc/UTC';}
+
             $('#channel').val(thingspeak['channel']);
             $('#read_api_key').val(thingspeak['read_api_key']);
+            $('#timezone').val(thingspeak['timezone']);
             $('#user_api_key').val(thingspeak['user_api_key']);
             $('#tag').val(thingspeak['tag']);
 
@@ -110,6 +114,7 @@
             // update params
             thingspeak['channel'] = $('#channel').val();
             thingspeak['read_api_key'] = $('#read_api_key').val();
+            thingspeak['timezone'] = $('#timezone').val();
 
             // save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
@@ -166,7 +171,7 @@
         function getUpdates() {
 
             // get the data with a webservice call
-            $.getJSON( thingspeak['url'] + '/channels/' + thingspeak['channel'] + '/feed.json?results=' + thingspeak['results'] + '&location=' + thingspeak['location'] + '&status=' + thingspeak['status'] + '&api_key=' + thingspeak['read_api_key'], function( data ) {
+            $.getJSON( thingspeak['url'] + '/channels/' + thingspeak['channel'] + '/feed.json?results=' + thingspeak['results'] + '&timezone=' + thingspeak['timezone'] + '&location=' + thingspeak['location'] + '&status=' + thingspeak['status'] + '&api_key=' + thingspeak['read_api_key'], function( data ) {
 
                 // create table and headers if channel object exists
                 if (data.channel) {
@@ -710,6 +715,14 @@
                         </div>
                     </div>
                     <div class="col-lg-6">
+                        <div class="input-group">
+                            <span class="input-group-addon">Timezone</span>
+                            <input type="text" class="form-control feed-form" id="timezone">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
                         <button type="button" class="btn btn-secondary" onClick="includeLocation(this)" id="location">
                             <span class="fas fa-square"></span> Location
                         </button>
