@@ -13,14 +13,14 @@
     <meta name="msapplication-TileColor" content="#2d89ef">
     <meta name="theme-color" content="#ffffff">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.6/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/jquery/1.12.0/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
 
     <style type="text/css">
         .feed-row { transition: background-color 2s ease; }
         .rgb-cell { transition: color 0.5s ease, background-color 0.5s ease; }
-        .glyphicon { vertical-align: text-top; }
         /* restore webkit search cancel (overridden by Bootstrap) */
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: searchfield-cancel-button; }
     </style>
@@ -64,15 +64,15 @@
             $('#tag').val(thingspeak['tag']);
 
             if (thingspeak['location']) {
-                $('#location').find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
+                $('#location').find(".fas").removeClass("fa-square").addClass("fa-check-square");
             }
 
             if (thingspeak['status']) {
-                $('#status').find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
+                $('#status').find(".fas").removeClass("fa-square").addClass("fa-check-square");
             }
 
             if (thingspeak['start']) {
-                $('#start').find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
+                $('#start').find(".fas").removeClass("fa-play").addClass("fa-pause");
             }
 
             // when feed inputs change update params and clear output
@@ -377,7 +377,7 @@
                     $new_item.append($title);
 
                     // wrap tag links and add icon
-                    var $tag_item = $('<p class="list-group-item-text"><span class="glyphicon glyphicon-tags" />&nbsp;&nbsp;</p>');
+                    var $tag_item = $('<p class="list-group-item-text"><span class="fas fa-tags" />&nbsp;&nbsp;</p>');
                     $tag_item.append(listTags(channel.tags));
 
                     // add placeholder if no tags are present
@@ -445,7 +445,7 @@
         function playPause(button) {
 
             // switch button state and start or stop updates
-            if ($(button).find(".glyphicon").hasClass("glyphicon-pause")) {
+            if ($(button).find(".fas").hasClass("fa-pause")) {
                 pause();
             }
             else {
@@ -457,8 +457,8 @@
         function pause() {
 
             // show play button state
-            if ($("#start").find(".glyphicon").hasClass("glyphicon-pause")) {
-                $("#start").find(".glyphicon").removeClass("glyphicon-pause").addClass("glyphicon-play");
+            if ($("#start").find(".fas").hasClass("fa-pause")) {
+                $("#start").find(".fas").removeClass("fa-pause").addClass("fa-play");
             }
 
             // update params
@@ -475,8 +475,8 @@
         function play() {
 
             // show pause button state
-            if ($("#start").find(".glyphicon").hasClass("glyphicon-play")) {
-                $("#start").find(".glyphicon").removeClass("glyphicon-play").addClass("glyphicon-pause");
+            if ($("#start").find(".fas").hasClass("fa-play")) {
+                $("#start").find(".fas").removeClass("fa-play").addClass("fa-pause");
             }
 
             // update params
@@ -497,10 +497,10 @@
         function includeLocation(button) {
 
             // switch button state and change API request
-            if ($(button).find(".glyphicon").hasClass("glyphicon-unchecked")) {
+            if ($(button).find(".fas").hasClass("fa-square")) {
 
                 // show checked button state
-                $(button).find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
+                $(button).find(".fas").removeClass("fa-square").addClass("fa-check-square");
 
                 // update params
                 thingspeak['location'] = true;
@@ -511,8 +511,8 @@
             }
             else {
 
-                // show unchecked button state
-                $(button).find(".glyphicon").removeClass("glyphicon-check").addClass("glyphicon-unchecked");
+                // show-square button state
+                $(button).find(".fas").removeClass("fa-check-square").addClass("fa-square");
 
                 // update params
                 thingspeak['location'] = false;
@@ -531,10 +531,10 @@
         function includeStatus(button) {
 
             // switch button state and change API request
-            if ($(button).find(".glyphicon").hasClass("glyphicon-unchecked")) {
+            if ($(button).find(".fas").hasClass("fa-square")) {
 
                 // show checked button state
-                $(button).find(".glyphicon").removeClass("glyphicon-unchecked").addClass("glyphicon-check");
+                $(button).find(".fas").removeClass("fa-square").addClass("fa-check-square");
 
                 // update params
                 thingspeak['status'] = true;
@@ -545,8 +545,8 @@
             }
             else {
 
-                // show unchecked button state
-                $(button).find(".glyphicon").removeClass("glyphicon-check").addClass("glyphicon-unchecked");
+                // show-square button state
+                $(button).find(".fas").removeClass("fa-check-square").addClass("fa-square");
 
                 // update params
                 thingspeak['status'] = false;
@@ -565,7 +565,7 @@
         function toggleChannelPanel(button) {
 
             // switch button state and show/hide panel
-            if ($(button).find(".glyphicon").hasClass("glyphicon-menu-down")) {
+            if ($(button).find(".fas").hasClass("fa-chevron-down")) {
 
                 // call helper show function
                 showChannelPanel();
@@ -582,7 +582,7 @@
         function showChannelPanel() {
 
             // show minus button state
-            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-menu-down").addClass("glyphicon-menu-up");
+            $('#toggle-channel-panel').find(".fas").removeClass("fa-chevron-down").addClass("fa-chevron-up");
 
             // show panel
             $('#channel-panel').collapse('show');
@@ -592,7 +592,7 @@
         function hideChannelPanel() {
 
             // show plus button state
-            $('#toggle-channel-panel').find(".glyphicon").removeClass("glyphicon-menu-up").addClass("glyphicon-menu-down");
+            $('#toggle-channel-panel').find(".fas").removeClass("fa-chevron-up").addClass("fa-chevron-down");
 
             // hide panel
             $('#channel-panel').collapse('hide');
@@ -624,21 +624,16 @@
 </head>
 <body>
 
-    <nav class="navbar navbar-default">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#iotNavBar">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="index.html">IoT Debugger</a>
-            </div>
-            <div class="collapse navbar-collapse" id="iotNavBar">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a href="thingspeak.html">ThingSpeak</a></li>
-                    <li><a href="particle.html">Particle</a></li>
-                </ul>
+    <nav class="navbar navbar-light bg-light navbar-expand-md">
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#iotNavBar">&#x2630;</button> <a class="navbar-brand" href="index.html">IoT Debugger</a>
+        <div
+        class="collapse navbar-collapse" id="iotNavBar">
+            <ul class="nav navbar-nav">
+                <li class="nav-item active"><a href="thingspeak.html" class="nav-link">ThingSpeak</a>
+                </li>
+                <li class="nav-item"><a href="particle.html" class="nav-link">Particle</a>
+                </li>
+            </ul>
             </div>
     </nav>
 
@@ -648,8 +643,8 @@
             <h1>ThingSpeak Logger</h1>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
+        <div class="card ">
+            <div class="card-header">
                 <div class="row">
                     <div class="col-xs-12">
                         <div class="collapse" id="channel-panel-config">
@@ -670,14 +665,14 @@
 
                     <div class="col-lg-4 col-sm-6">
                         <button type="button" class="btn btn-primary" onClick="refreshChannels()" id="refresh_channels">
-                            <span class="glyphicon glyphicon-refresh"></span>
+                            <span class="fas fa-sync"></span>
                         </button>
                         <span style="float:right">
-                            <button type="button" class="btn btn-default" onClick="toggleConfigureChannelPanel(this)" id="configure-channel-panel">
-                                <span class="glyphicon glyphicon-cog"></span> Configure
+                            <button type="button" class="btn btn-secondary" onClick="toggleConfigureChannelPanel(this)" id="configure-channel-panel">
+                                <span class="fas fa-cog"></span> Configure
                             </button>
                             <button type="button" class="btn btn-link" onClick="toggleChannelPanel(this)" id="toggle-channel-panel">
-                                <span class="glyphicon glyphicon-menu-down"></span>
+                                <span class="fas fa-chevron-down"></span>
                             </button>
                         </span>
                     </div>
@@ -685,11 +680,11 @@
             </div>
 
             <div class="panel-collapse collapse" id="channel-panel">
-                <div class="panel-body">
+                <div class="card-block">
                     <h3 id="channels-header"></h3>
 
                     <div class="well text-muted" id="user-api-prompt" onClick="showConfigureChannelPanel();" style="margin:-1em 0 -1em 0">
-                        <span class="glyphicon glyphicon-info-sign"></span>
+                        <span class="fas fa-info-sign"></span>
                         <span>Enter a User API Key to browse channels.</span>
                         <a href="https://thingspeak.com/account/profile" target="_blank">(User API Key?)</a>
                     </div>
@@ -699,8 +694,8 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
+        <div class="card ">
+            <div class="card-header">
                 <div class="row">
                     <div class="col-lg-2">
                         <div class="input-group">
@@ -715,22 +710,22 @@
                         </div>
                     </div>
                     <div class="col-lg-6">
-                        <button type="button" class="btn btn-default" onClick="includeLocation(this)" id="location">
-                            <span class="glyphicon glyphicon-unchecked"></span> Location
+                        <button type="button" class="btn btn-secondary" onClick="includeLocation(this)" id="location">
+                            <span class="fas fa-square"></span> Location
                         </button>
 
-                        <button type="button" class="btn btn-default" onClick="includeStatus(this)" id="status">
-                            <span class="glyphicon glyphicon-unchecked"></span> Status
+                        <button type="button" class="btn btn-secondary" onClick="includeStatus(this)" id="status">
+                            <span class="fas fa-square"></span> Status
                         </button>
 
                         <button type="button" class="btn btn-primary" onClick="playPause(this)" id="start">
-                            <span class="glyphicon glyphicon-play"></span>
+                            <span class="fas fa-play"></span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="panel-body">
+            <div class="card-block">
                 <h1 id="header"></h1>
 
                 <table class="table table-striped" id="output"></table>
