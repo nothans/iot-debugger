@@ -63,6 +63,7 @@
 
             $('#channel').val(thingspeak['channel']);
             $('#read_api_key').val(thingspeak['read_api_key']);
+            $('#results').val(thingspeak['results']);
             $('#timezone').val(thingspeak['timezone']);
             $('#user_api_key').val(thingspeak['user_api_key']);
             $('#tag').val(thingspeak['tag']);
@@ -114,6 +115,7 @@
             // update params
             thingspeak['channel'] = $('#channel').val();
             thingspeak['read_api_key'] = $('#read_api_key').val();
+            thingspeak['results'] = $('#results').val();
             thingspeak['timezone'] = $('#timezone').val();
 
             // save to local storage
@@ -171,13 +173,15 @@
         function getUpdates() {
 
             // get the data with a webservice call
-            $.getJSON( thingspeak['url'] + '/channels/' + thingspeak['channel'] + '/feed.json?results=' + thingspeak['results'] + '&timezone=' + thingspeak['timezone'] + '&location=' + thingspeak['location'] + '&status=' + thingspeak['status'] + '&api_key=' + thingspeak['read_api_key'], function( data ) {
+            thingspeak['api'] = thingspeak['url'] + '/channels/' + thingspeak['channel'] + '/feed.json?results=' + thingspeak['results'] + '&timezone=' + thingspeak['timezone'] + '&location=' + thingspeak['location'] + '&status=' + thingspeak['status'] + '&api_key=' + thingspeak['read_api_key'];
+            
+            $.getJSON(thingspeak['api'], function(data) {
 
                 // create table and headers if channel object exists
                 if (data.channel) {
 
                     // set headers
-                    $('#header').html('<b>' + data.channel.name + '</b>');
+                    $('#header').html(data.channel.name + ' <a href="' + thingspeak['api'] + '" target="_blank"><span class="fas fa-external-link-alt"></span></a>');
 
                     // create table head and body if they do not exist
                     if ($('#output').find('thead').length == 0) {
@@ -702,16 +706,24 @@
         <div class="card ">
             <div class="card-header">
                 <div class="row">
-                    <div class="col-lg-2">
+                    <div class="col-lg-6">
                         <div class="input-group">
                             <span class="input-group-addon">Channel</span>
                             <input type="text" class="form-control feed-form" id="channel">
                         </div>
                     </div>
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <div class="input-group">
                             <span class="input-group-addon">Read API Key</span>
                             <input type="text" class="form-control feed-form" id="read_api_key">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="input-group">
+                            <span class="input-group-addon">Results</span>
+                            <input type="text" class="form-control feed-form" id="results">
                         </div>
                     </div>
                     <div class="col-lg-6">
