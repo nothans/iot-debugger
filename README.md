@@ -1,5 +1,5 @@
 # IoT Debugger
-Use this simple web-based tool to see data stored in an Internet of Things data service such as [ThingSpeak](https://thingspeak.com/channels/9) and [Particle.io](https://build.particle.io/signup).
+Use this web-based tool to see data stored in an Internet of Things data service such as [ThingSpeak](https://thingspeak.com/channels/9).
 
 ## Demo
 * [Open Demo App for ThingSpeak](https://iot-debugger.nothans.com/app/index.html)
@@ -8,13 +8,5 @@ Use this simple web-based tool to see data stored in an Internet of Things data 
 ## How to Use IoT Debugger
 * Download project
 * Open index.html in a browser tab
-* Select either ThingSpeak or Particle
+* Select ThingSpeak
 * To use ThingSpeak - Enter the ThingSpeak Channel and Read API Key and click the play button to start getting data
-* To use Particle - Enter the Access Token for the Particle.io Build Account
-
-## Features
-* ThingSpeak Data Logger and Channel Browser
-* Particle.io Webhooks Manager
-* Settings are saved in LocalStorage
-* Built using HTML5, Bootstrap, and jQuery
-* Open Source!
