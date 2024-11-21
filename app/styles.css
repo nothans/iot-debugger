@@ -14,9 +14,17 @@
     color: #fff;
     height: 176px;
     background: rgb(63,81,181);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 .welcome-card > .mdl-card__title > h2 {
     margin: 0;
+}
+.welcome-card > .mdl-card__title > img {
+    height: 256px;
+    margin-left: 16px;
+    filter: brightness(0) invert(1);
 }
 .welcome-card > .mdl-card__supporting-text {
     font-size: 1.1em;

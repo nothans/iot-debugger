@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="512" height="512" fill="transparent"/>
+    
+    <!-- IoT Node Network -->
+    <g transform="translate(256, 256)">
+        <!-- Central Hub -->
+        <circle cx="0" cy="0" r="40" fill="#007bff"/>
+        
+        <!-- Play Button Triangle -->
+        <path d="M-12,-20 L20,0 L-12,20 Z" fill="white"/>
+        
+        <!-- Connected Nodes -->
+        <g>
+            <!-- Node 1 -->
+            <circle cx="-120" cy="-120" r="25" fill="#28a745"/>
+            <line x1="-100" y1="-100" x2="-20" y2="-20" stroke="#6c757d" stroke-width="4"/>
+            
+            <!-- Node 2 -->
+            <circle cx="120" cy="-120" r="25" fill="#28a745"/>
+            <line x1="100" y1="-100" x2="20" y2="-20" stroke="#6c757d" stroke-width="4"/>
+            
+            <!-- Node 3 -->
+            <circle cx="120" cy="120" r="25" fill="#28a745"/>
+            <line x1="100" y1="100" x2="20" y2="20" stroke="#6c757d" stroke-width="4"/>
+            
+            <!-- Node 4 -->
+            <circle cx="-120" cy="120" r="25" fill="#28a745"/>
+            <line x1="-100" y1="100" x2="-20" y2="20" stroke="#6c757d" stroke-width="4"/>
+        </g>
+        
+        <!-- Connection Pulses -->
+        <circle cx="0" cy="0" r="60" fill="none" stroke="#007bff" stroke-width="2" opacity="0.3">
+            <animate attributeName="r" from="60" to="100" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.3" to="0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+    </g>
+</svg>
