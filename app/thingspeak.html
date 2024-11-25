@@ -1,789 +1,456 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <!-- Meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT Debugger - ThingSpeak</title>
+    <meta name="description" content="View data from ThingSpeak channels using the IoT Debugger.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
-       
+    <!-- Preconnects -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://code.getmdl.io">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <link rel="stylesheet" href="styles.css">
 
+    <!-- Scripts -->
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+
+    <!-- Custom JavaScript -->
     <script type="text/javascript">
-
-        // setup time for updates
+        // Setup variables
         var updates = null;
-
-        // setup IoT service details and defaults
         var thingspeak = {};
 
-        // check local storage for thingspeak
-        if (localStorage.getItem('thingspeak')) {
+        // Move initialization code into window load event
+        window.addEventListener('load', function() {
+            // Check local storage for thingspeak settings
+            if (localStorage.getItem('thingspeak')) {
+                thingspeak = JSON.parse(localStorage.getItem('thingspeak'));
+            } else {
+                // Set default thingspeak settings
+                thingspeak['url'] = 'https://api.thingspeak.com';
+                thingspeak['channel'] = 1417;
+                thingspeak['read_api_key'] = '';
+                thingspeak['results'] = 5;
+                thingspeak['timezone'] = 'Etc/UTC';
+                thingspeak['location'] = false;
+                thingspeak['status'] = true;
+                thingspeak['start'] = true;
 
-            thingspeak = JSON.parse(localStorage.getItem('thingspeak'));
+                // Save to local storage
+                localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
+            }
 
-        }
-        else {
+            $(document).ready(function() {
+                // Populate timezone select
+                var timezones = moment.tz.names();
+                var select = document.getElementById("timezone");
+                var current_tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-            // set thingspeak
-            thingspeak['url'] = 'https://api.thingspeak.com';
-            thingspeak['channel'] = 1417;
-            thingspeak['read_api_key'] = '';
-            thingspeak['results'] = 5;
-            thingspeak['timezone'] = 'Etc/UTC';
-            thingspeak['location'] = false;
-            thingspeak['status'] = true;
-            thingspeak['start'] = true;
-
-            // save to local storage
-            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
-
-        }
-
-        $(document).ready(function() {
-
-            var timezones = moment.tz.names();
-            var select = document.getElementById("timezone");
-            var current_tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    
-            for(var i = 0; i < timezones.length; i++) {
-                var opt = document.createElement('option');
-                opt.value = timezones[i];
-                opt.innerHTML = timezones[i];
-                if(timezones[i] === current_tz) {
-                    opt.selected = true;
+                for(var i = 0; i < timezones.length; i++) {
+                    var opt = document.createElement('option');
+                    opt.value = timezones[i];
+                    opt.innerHTML = timezones[i];
+                    if(timezones[i] === current_tz) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
                 }
-                select.appendChild(opt);
-            }
 
-            // set default inputs
-            if (!thingspeak['timezone']) {thingspeak['timezone'] = 'Etc/UTC';}
+                // Set default inputs
+                if (!thingspeak['timezone']) { thingspeak['timezone'] = 'Etc/UTC'; }
 
-            $('#channel').val(thingspeak['channel']);
-            $('#read_api_key').val(thingspeak['read_api_key']);
-            $('#results').val(thingspeak['results']);
-            $('#timezone').val(thingspeak['timezone']);
-            $('#user_api_key').val(thingspeak['user_api_key']);
-            $('#tag').val(thingspeak['tag']);
+                $('#channel').val(thingspeak['channel']);
+                $('#read_api_key').val(thingspeak['read_api_key']);
+                $('#results').val(thingspeak['results']);
+                $('#timezone').val(thingspeak['timezone']);
 
-            if (thingspeak['location']) {
-                $('#location').find(".fas").removeClass("fa-square").addClass("fa-check-square");
-            }
+                // Add these lines to force MDL to recognize the filled inputs
+                $('#channel').parent().addClass('is-dirty');
+                $('#read_api_key').parent().addClass('is-dirty');
+                $('#results').parent().addClass('is-dirty');
+                $('#timezone').parent().addClass('is-dirty');
 
-            if (thingspeak['status']) {
-                $('#status').find(".fas").removeClass("fa-square").addClass("fa-check-square");
-            }
+                if (thingspeak['location']) {
+                    $('#location').find(".material-icons").text("check_box");
+                }
 
-            if (thingspeak['start']) {
-                $('#start').find(".fas").removeClass("fa-play").addClass("fa-pause");
-            }
+                if (thingspeak['status']) {
+                    $('#status').find(".material-icons").text("check_box");
+                }
 
-            // when feed inputs change update params and clear output
-            $( ".feed-form" ).change(updateFeedParams);
+                if (thingspeak['start']) {
+                    $('#start').find(".material-icons").text("pause");
+                }
 
-            // when channel inputs change update params
-            $( ".channel-form" ).change(updateChannelParams);
+                // When feed inputs change update params and clear output
+                $( ".feed-form" ).change(updateFeedParams);
 
-            // start updates if play button is active
-            if (thingspeak['start']) {
+                // Start updates if play button is active
+                if (thingspeak['start']) {
+                    // Start updates
+                    getUpdates();
 
-                // start updates
-                getUpdates();
-
-                // check for new updates
-                updates = setInterval('getUpdates()',5000);
-
-            }
-
-            // check if a user api key is available
-            if (thingspeak['user_api_key']) {
-                // hide user key prompt and load channels
-                $('#user-api-prompt').hide();
-                refreshChannels();
-            }
-            else {
-                // show channel config panel
-                showConfigureChannelPanel();
-            }
-
+                    // Check for new updates
+                    updates = setInterval(getUpdates, 5000);
+                }
+            });
         });
 
         function updateFeedParams() {
-
-            // update params
+            // Update parameters
             thingspeak['channel'] = $('#channel').val();
             thingspeak['read_api_key'] = $('#read_api_key').val();
             thingspeak['results'] = $('#results').val();
             thingspeak['timezone'] = $('#timezone').val() || 'Etc/UTC';
 
-            // save to local storage
+            // Save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
 
-            // clear output
+            // Clear output
             $('#header').html('');
             $('#description').html('');
             $('#output').html('');
-
-        }
-
-        function updateChannelParams() {
-
-            if (!thingspeak['user_api_key'] && $('#user_api_key').val()) {
-                // hide API key panel
-                hideConfigureChannelPanel();
-            }
-
-            // update params
-            thingspeak['user_api_key'] = $('#user_api_key').val();
-            thingspeak['tag'] = $('#tag').val();
-
-            // check if user api key is present
-            if (thingspeak['user_api_key']) {
-
-                // hide prompt to enter key
-                $('#user-api-prompt').hide();
-
-                // refresh channels
-                refreshChannels();
-
-                // expand channel panel
-                showChannelPanel();
-
-            } else {
-
-                // clear display
-                $('#channels-header').html('');
-                $('#channels').html('');
-
-                // show prompt to enter key
-                $('#user-api-prompt').show();
-
-                if (thingspeak['tag']) {
-                    // show API key panel
-                    showConfigureChannelPanel();
-                }
-
-            }
-
-            // save to local storage
-            localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
         }
 
         function getUpdates() {
-
-            // get the data with a webservice call
+            // Build API URL
             thingspeak['api'] = thingspeak['url'] + '/channels/' + thingspeak['channel'] + '/feed.json?results=' + thingspeak['results'] + '&timezone=' + thingspeak['timezone'] + '&location=' + thingspeak['location'] + '&status=' + thingspeak['status'] + '&api_key=' + thingspeak['read_api_key'];
             
             $.getJSON(thingspeak['api'], function(data) {
-
-                // create table and headers if channel object exists
+                // Create table and headers if channel object exists
                 if (data.channel) {
+                    // Set headers
+                    $('#header').html(data.channel.name + ' <a href="' + thingspeak['api'] + '" target="_blank"><i class="material-icons">open_in_new</i></a>');
 
-                    // set headers
-                    $('#header').html(data.channel.name + ' <a href="' + thingspeak['api'] + '" target="_blank"><span class="fas fa-external-link-alt"></span></a>');
-
-                    // add channel description
+                    // Add channel description
                     if (data.channel.description) {
                         $('#description').html(data.channel.description);
                     }
 
-                    // create table head and body if they do not exist
+                    // Create table head and body if they do not exist
                     if ($('#output').find('thead').length == 0) {
-
-                        // add head to output table
+                        // Add head to output table
                         $('#output').append("<thead><tr></tr></thead>");
 
-                        // add date/time field as header
-                        $('#output').find('thead').append("<th>Update Time</th>");
+                        // Add date/time field as header
+                        $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Update Time</th>");
 
-                        // add header for each field
-                        if (data.channel.hasOwnProperty('field1')) { 
-                            $('#output').find('thead').append("<th>Field 1 <br>" + data.channel.field1 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field2')) { 
-                            $('#output').find('thead').append("<th>Field 2 <br>" + data.channel.field2 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field3')) { 
-                            $('#output').find('thead').append("<th>Field 3 <br>" + data.channel.field3 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field4')) { 
-                            $('#output').find('thead').append("<th>Field 4 <br>" + data.channel.field4 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field5')) { 
-                            $('#output').find('thead').append("<th>Field 5 <br>" + data.channel.field5 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field6')) { 
-                            $('#output').find('thead').append("<th>Field 6 <br>" + data.channel.field6 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field7')) { 
-                            $('#output').find('thead').append("<th>Field 7 <br>" + data.channel.field7 + "</th>"); 
-                        }
-                        if (data.channel.hasOwnProperty('field8')) { 
-                            $('#output').find('thead').append("<th>Field 8 <br>" + data.channel.field8 + "</th>"); 
+                        // Add header for each field
+                        for (var i = 1; i <= 8; i++) {
+                            if (data.channel.hasOwnProperty('field' + i)) {
+                                $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Field " + i + "<br>" + data.channel['field' + i] + "</th>");
+                            }
                         }
 
-                        // add location fields if included
+                        // Add location fields if included
                         if (thingspeak['location']) {
-                            $('#output').find('thead').append("<th>Latitude</th>");
-                            $('#output').find('thead').append("<th>Longitude</th>");
-                            $('#output').find('thead').append("<th>Elevation</th>");
+                            $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Latitude</th>");
+                            $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Longitude</th>");
+                            $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Elevation</th>");
                         }
 
-                        // add status field if included
+                        // Add status field if included
                         if (thingspeak['status']) {
-                            $('#output').find('thead').append("<th>Status</th>");
+                            $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Status</th>");
                         }
 
-                        // add body to output table
+                        // Add body to output table
                         $('#output').append("<tbody></tbody>");
-
                     }
-
                 }
 
-                // if the field1 has data update the page
+                // If the field1 has data update the page
                 if (data.feeds) {
-
-                    // go through each feed and add it to the top of the table if the row does not exist
-                    $.each( data.feeds, function( i, feed ) {
-
-                        // add entry to table if it does not exist
+                    // Go through each feed and add it to the top of the table if the row does not exist
+                    $.each(data.feeds, function(i, feed) {
+                        // Add entry to table if it does not exist
                         if ($('#output').find('#entry_' + feed.entry_id).length === 0) {
-
-                            // create a new blank row
+                            // Create a new blank row
                             var $new_row = $("<tr id='entry_" + feed.entry_id + "' class='feed-row'></tr>");
 
-                            // add time/date data to field
-                            $new_row.append("<td><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
+                            // Add time/date data to field
+                            $new_row.append("<td class='mdl-data-table__cell--non-numeric'><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
 
-                            // add field data to each field
-                            if (feed.hasOwnProperty('field1')) { $new_row.append(getTableElement(feed.field1)); }
-                            if (feed.hasOwnProperty('field2')) { $new_row.append(getTableElement(feed.field2)); }
-                            if (feed.hasOwnProperty('field3')) { $new_row.append(getTableElement(feed.field3)); }
-                            if (feed.hasOwnProperty('field4')) { $new_row.append(getTableElement(feed.field4)); }
-                            if (feed.hasOwnProperty('field5')) { $new_row.append(getTableElement(feed.field5)); }
-                            if (feed.hasOwnProperty('field6')) { $new_row.append(getTableElement(feed.field6)); }
-                            if (feed.hasOwnProperty('field7')) { $new_row.append(getTableElement(feed.field7)); }
-                            if (feed.hasOwnProperty('field8')) { $new_row.append(getTableElement(feed.field8)); }
+                            // Add field data to each field
+                            for (var j = 1; j <= 8; j++) {
+                                if (feed.hasOwnProperty('field' + j)) {
+                                    $new_row.append(getTableElement(feed['field' + j]));
+                                }
+                            }
 
-                            // add location data if included
+                            // Add location data if included
                             if (thingspeak['location']) {
-                                $new_row.append("<td>" + feed.latitude + "</td>");
-                                $new_row.append("<td>" + feed.longitude + "</td>");
-                                $new_row.append("<td>" + feed.elevation + "</td>");
+                                $new_row.append("<td class='mdl-data-table__cell--non-numeric'>" + feed.latitude + "</td>");
+                                $new_row.append("<td class='mdl-data-table__cell--non-numeric'>" + feed.longitude + "</td>");
+                                $new_row.append("<td class='mdl-data-table__cell--non-numeric'>" + feed.elevation + "</td>");
                             }
 
-                            // add status data if included
+                            // Add status data if included
                             if (thingspeak['status']) {
-                                $new_row.append("<td>" + feed.status + "</td>");
+                                $new_row.append("<td class='mdl-data-table__cell--non-numeric'>" + feed.status + "</td>");
                             }
 
-                            // add the row to the table
+                            // Add the row to the table
                             $('#output').prepend($new_row);
 
-                            // set the background color to green
-                            $new_row.css('background-color', '#efe');
+                            // Set the background color to indicate new data
+                            $new_row.addClass('new-data');
 
-                            // remove the background color after 500ms
-                            // css transitions are used with the feed-row class to make this smooth
+                            // Remove the background color after 500ms
                             setTimeout(function() {
-                                $new_row.css('background-color', '');
+                                $new_row.removeClass('new-data');
                             }, 500);
-
                         }
-
                     });
-
                 }
-
             });
-
         }
 
         function getTableElement(content) {
+            // Create a table cell element containing the given content
+            var $td = $("<td class='mdl-data-table__cell--non-numeric'>" + content + "</td>");
 
-            // create a table element containing the given content
-            var $td = $('<td>' + content + '</td>');
-
-            // regex pattern to match RGB hex values
-            // remove preceding ^ to match colors within text
+            // Regex pattern to match RGB hex values
             var rgbPattern = /^#(([a-f\d]{2}){3})$/i;
 
-            // check content for a color
+            // Check content for a color
             if (rgbPattern.test(content)) {
+                // Extract that color
+                var color = rgbPattern.exec(content)[0];
 
-            // extract that color
-            var color = rgbPattern.exec(content)[0];
+                // Mark the cell as a rgb-cell for the CSS transitions
+                $td.addClass('rgb-cell');
 
-            // mark the cell as a rgb-cell for the CSS transitions
-            $td.addClass('rgb-cell');
+                // Set the cell's background color to the hex color
+                $td.css('background-color', color);
 
-            // set the cell's background color to the hex color
-            $td.css('background-color', color);
+                // Determine whether to set the font to white or black depending on the hex color
+                $td.css('color', useDarkFont(color) ? '#000' : '#fff');
 
-            // determine whether to set the font to white or black depending on the hex color
-            $td.css('color', useDarkFont(color) ? '#000' : '#fff');
-
-            // remove background and text color when hovering and restore when mouse exits
-            $td.hover(
-                function() {
-                    $td.css('background-color', '');
-                    $td.css('color', '');
-                },
-                function() {
-                    $td.css('background-color', color);
-                    $td.css('color', useDarkFont(color) ? '#000' : '#fff');
-                });
+                // Remove background and text color when hovering and restore when mouse exits
+                $td.hover(
+                    function() {
+                        $td.css('background-color', '');
+                        $td.css('color', '');
+                    },
+                    function() {
+                        $td.css('background-color', color);
+                        $td.css('color', useDarkFont(color) ? '#000' : '#fff');
+                    });
             }
 
             return $td;
         }
 
-
-        function refreshChannels() {
-            var tagQuery = thingspeak['tag'] ? '&tag=' + encodeURIComponent(thingspeak['tag']) : '';
-
-            $.getJSON( thingspeak['url'] + '/channels.json?api_key=' + thingspeak['user_api_key'] + tagQuery, function( data ) {
-
-                // clear old channel data
-                $('#channels').empty();
-
-                if (data.length > 0) {
-
-                    // set channel header including tag if present
-                    $('#channels-header').html('Channels' + (thingspeak['tag'] ? ' with Tag: ' + thingspeak['tag'] : ''));
-
-                } else {
-
-                    // set channel header including tag if present
-                    $('#channels-header').html('No Channels Found' + (thingspeak['tag'] ? ' with Tag: ' + thingspeak['tag'] : ''));
-
-                    // return so no table is drawn
-                    return;
-                }
-
-                // add a row for each channel
-                $.each( data, function( i, channel ) {
-
-                    // create a new row
-                    var $new_item = $("<li class='list-group-item channel-row'></li>");
-
-                    $new_item.append($('<div class="text-muted" style="float:right">ID: ' + channel.id + '<br />' + (channel.public_flag ? 'Public' : 'Private') + '</div>'))
-
-                    var $title = $('<span></span>');
-
-                    // create the channel name link element
-                    var $title_link = $('<h4 class="list-group-item-heading"><a href="#">' + channel.name + '</a></h4>');
-
-                    // add an onClick event to the name link
-                    $title_link.click(function( event ) {
-                        // prevent navigation
-                        event.preventDefault();
-
-                        // find channel's read key
-                        var readKey = channel.api_keys.find(function ( key ) {
-                            return key.write_flag;
-                        })
-
-                        // update forms with this channel's id and key
-                        $('#channel').val(channel.id);
-                        $('#read_api_key').val(readKey.api_key);
-
-                        // update configuration
-                        updateFeedParams();
-
-                        // collapse channels panel
-                        hideChannelPanel();
-
-                        // start fetching updates
-                        play();
-
-                    })
-
-                    $title.append($title_link);
-
-                    // add channel name to row
-                    $new_item.append($title);
-
-                    // wrap tag links and add icon
-                    var $tag_item = $('<p class="list-group-item-text"><span class="fas fa-tags" />&nbsp;&nbsp;</p>');
-                    $tag_item.append(listTags(channel.tags));
-
-                    // add placeholder if no tags are present
-                    if (channel.tags.length === 0) {
-                        $tag_item.append('<span class="text-muted">None</span>')
-                    }
-
-                    // add tag links to row
-                    $new_item.append($tag_item);
-
-                    if (channel.description && channel.description !== "") {
-                        $new_item.append($('<div class="text-muted">' + channel.description + '</div>'));
-                    }
-
-                    // add the row to the table
-                    $('#channels').append($new_item);
-
-                });
-
-            });
-        }
-
-        function listTags(tags) {
-            // create the list container
-            var $list = $('<span></span>');
-
-            // iterate through each tag
-            $.each(tags, function ( i, tag ) {
-                // create a link with the tag's name
-                var $link = $('<a href="#">' + tag.name + '</a>');
-
-                // make the tag bold if it's the currently searched tag
-                if (tag.name.toUpperCase() === thingspeak['tag'].toUpperCase()) {
-                    $link.css("font-weight","Bold");
-                }
-
-                // add an onClick event that filters the user's channels by tag
-                $link.click(function ( event ) {
-                    event.preventDefault();
-
-                    $('#tag').val(tag.name);
-                    updateChannelParams();
-                });
-
-                // add the tag to the list with a comma if it isn't the last tag
-                $list.append($link).append($('<span>' + (i < tags.length - 1 ? ', ' : '') + '</span>'));
-            })
-
-            return $list;
-        }
-
-        // tweaked from https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
+        // Function to determine if dark font should be used on a given background color
         function useDarkFont(color) {
+            // Regex to separate RGB components
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
 
-          // regex to separate RGB components
-          var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+            // Counting the perceptive luminance - human eye favors green color...
+            var a = 1 - ( 0.299 * parseInt(result[1], 16) + 0.587 * parseInt(result[2], 16) + 0.114 * parseInt(result[3], 16)) / 255;
 
-          // Counting the perceptive luminance - human eye favors green color...
-          var a = 1 - ( 0.299 * parseInt(result[1], 16) + 0.587 * parseInt(result[2], 16) + 0.114 * parseInt(result[3], 16)) / 255;
-
-          return a < 0.5;
+            return a < 0.5;
         }
 
-        // start / stop updates
+        // Start / stop updates
         function playPause(button) {
-
-            // switch button state and start or stop updates
-            if ($(button).find(".fas").hasClass("fa-pause")) {
+            // Switch button state and start or stop updates
+            if ($(button).find(".material-icons").text() === "pause") {
                 pause();
-            }
-            else {
+            } else {
                 play();
             }
-
         }
 
         function pause() {
+            // Show play button state
+            $("#start").find(".material-icons").text("play_arrow");
 
-            // show play button state
-            if ($("#start").find(".fas").hasClass("fa-pause")) {
-                $("#start").find(".fas").removeClass("fa-pause").addClass("fa-play");
-            }
-
-            // update params
+            // Update params
             thingspeak['start'] = false;
 
-            // stop updates
+            // Stop updates
             clearInterval(updates);
 
-            // save to local storage
+            // Save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
-
         }
 
         function play() {
+            // Show pause button state
+            $("#start").find(".material-icons").text("pause");
 
-            // show pause button state
-            if ($("#start").find(".fas").hasClass("fa-play")) {
-                $("#start").find(".fas").removeClass("fa-play").addClass("fa-pause");
-            }
-
-            // update params
+            // Update params
             thingspeak['start'] = true;
 
-            // start updates
+            // Start updates
             getUpdates();
 
-            // check for new updates
-            updates = setInterval('getUpdates()',5000);
+            // Check for new updates
+            updates = setInterval(getUpdates, 5000);
 
-            // save to local storage
+            // Save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
-
         }
 
-        // option to include location data
+        // Option to include location data
         function includeLocation(button) {
+            // Switch button state and change API request
+            if ($(button).find(".material-icons").text() === "check_box_outline_blank") {
+                // Show checked button state
+                $(button).find(".material-icons").text("check_box");
 
-            // switch button state and change API request
-            if ($(button).find(".fas").hasClass("fa-square")) {
-
-                // show checked button state
-                $(button).find(".fas").removeClass("fa-square").addClass("fa-check-square");
-
-                // update params
+                // Update params
                 thingspeak['location'] = true;
 
-                // clear output table
+                // Clear output table
                 $('#output').html('');
+            } else {
+                // Show unchecked button state
+                $(button).find(".material-icons").text("check_box_outline_blank");
 
-            }
-            else {
-
-                // show-square button state
-                $(button).find(".fas").removeClass("fa-check-square").addClass("fa-square");
-
-                // update params
+                // Update params
                 thingspeak['location'] = false;
 
-                // clear output table
+                // Clear output table
                 $('#output').html('');
-
             }
 
-            // save to local storage
+            // Save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
-
         }
 
-        // option to include status data
+        // Option to include status data
         function includeStatus(button) {
+            // Switch button state and change API request
+            if ($(button).find(".material-icons").text() === "check_box_outline_blank") {
+                // Show checked button state
+                $(button).find(".material-icons").text("check_box");
 
-            // switch button state and change API request
-            if ($(button).find(".fas").hasClass("fa-square")) {
-
-                // show checked button state
-                $(button).find(".fas").removeClass("fa-square").addClass("fa-check-square");
-
-                // update params
+                // Update params
                 thingspeak['status'] = true;
 
-                // clear output table
+                // Clear output table
                 $('#output').html('');
+            } else {
+                // Show unchecked button state
+                $(button).find(".material-icons").text("check_box_outline_blank");
 
-            }
-            else {
-
-                // show-square button state
-                $(button).find(".fas").removeClass("fa-check-square").addClass("fa-square");
-
-                // update params
+                // Update params
                 thingspeak['status'] = false;
 
-                // clear output table
+                // Clear output table
                 $('#output').html('');
-
             }
 
-            // save to local storage
+            // Save to local storage
             localStorage.setItem('thingspeak', JSON.stringify(thingspeak));
-
         }
-
-        // toggle for channel info panel
-        function toggleChannelPanel(button) {
-
-            // switch button state and show/hide panel
-            if ($(button).find(".fas").hasClass("fa-chevron-down")) {
-
-                // call helper show function
-                showChannelPanel();
-
-            }
-            else {
-
-                // call helper hide function
-                hideChannelPanel();
-
-            }
-        }
-
-        function showChannelPanel() {
-
-            // show minus button state
-            $('#toggle-channel-panel').find(".fas").removeClass("fa-chevron-down").addClass("fa-chevron-up");
-
-            // show panel
-            $('#channel-panel').collapse('show');
-
-        }
-
-        function hideChannelPanel() {
-
-            // show plus button state
-            $('#toggle-channel-panel').find(".fas").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-
-            // hide panel
-            $('#channel-panel').collapse('hide');
-
-        }
-
-        function toggleConfigureChannelPanel() {
-
-            // toggle channel panel configuration
-            $('#channel-panel-config').collapse('toggle');
-
-        }
-
-        function showConfigureChannelPanel() {
-
-            // show channel panel configuration
-            $('#channel-panel-config').collapse('show');
-
-        }
-
-        function hideConfigureChannelPanel() {
-
-            // hide channel panel configuration
-            $('#channel-panel-config').collapse('hide');
-
-        }
-
-      </script>
+    </script>
 </head>
 <body>
-
-    <nav class="navbar navbar-light bg-light navbar-expand-md">
-        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#iotNavBar">&#x2630;</button> <a class="navbar-brand" href="index.html">IoT Debugger</a>
-        <div
-        class="collapse navbar-collapse" id="iotNavBar">
-            <ul class="nav navbar-nav">
-                <li class="nav-item active"><a href="thingspeak.html" class="nav-link">ThingSpeak</a>
-                </li>
-            </ul>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header" role="banner">
+            <div class="mdl-layout__header-row">
+                <a href="index.html" class="site-title-link">
+                    <img src="favicon.svg" alt="IoT Debugger Logo" class="site-logo" width="32" height="32">
+                    <h1 class="mdl-layout-title">IoT Debugger</h1>
+                </a>
+                <div class="mdl-layout-spacer"></div>
+                <nav class="mdl-navigation" role="navigation">
+                    <a class="mdl-navigation__link active" href="thingspeak.html">ThingSpeak</a>
+                </nav>
+                <nav class="mdl-navigation" role="navigation">
+                    <a class="mdl-navigation__link" href="adafruit.html">Adafruit IO</a>
+                </nav>
             </div>
-    </nav>
+        </header>
 
-    <div class="container">
-
-        <div class="page-header">
-            <h1>ThingSpeak Logger</h1>
-        </div>
-
-        <div class="card ">
-            <div class="card-header">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <div class="collapse" id="channel-panel-config">
-                            <div class="form-group">
-                                <label for="user_api_key" class="form-label">User API Key</label>
-                                <input type="text" class="form-control channel-form" id="user_api_key">
+        <main class="mdl-layout__content" role="main">
+            <div class="page-content">
+                <div class="mdl-grid">
+                    <!-- Form Section -->
+                    <div class="mdl-cell mdl-cell--12-col">
+                        <h2>ThingSpeak Channel Data</h2>
+                        <form action="#" class="mdl-grid">
+                            <!-- Channel -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="text" id="channel">
+                                    <label class="mdl-textfield__label" for="channel">Channel</label>
+                                </div>
                             </div>
-                            <div style="height:10px"></div>
-                        </div>
+                            <!-- Read API Key -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="text" id="read_api_key">
+                                    <label class="mdl-textfield__label" for="read_api_key">Read API Key</label>
+                                </div>
+                            </div>
+                            <!-- Results -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="number" id="results">
+                                    <label class="mdl-textfield__label" for="results">Results</label>
+                                </div>
+                            </div>
+                            <!-- Timezone -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <select class="mdl-textfield__input feed-form" id="timezone"></select>
+                                    <label class="mdl-textfield__label" for="timezone">Timezone</label>
+                                </div>
+                            </div>
+                            <!-- Buttons -->
+                            <div class="mdl-cell mdl-cell--12-col">
+                                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" onclick="includeLocation(this)" id="location">
+                                    <i class="material-icons">check_box_outline_blank</i> Location
+                                </button>
+                                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" onclick="includeStatus(this)" id="status">
+                                    <i class="material-icons">check_box_outline_blank</i> Status
+                                </button>
+                            </div>
+                            <div class="mdl-cell mdl-cell--12-col">
+                                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="playPause(this)" id="start">
+                                    <i class="material-icons">play_arrow</i>
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
-                    <div class="col-lg-8 col-sm-6">
-                        <div class="form-group">
-                            <label for="tag" class="form-label">Tag</label>
-                            <input type="search" class="form-control channel-form" id="tag" placeholder="Filter by tag">
+                    <!-- Output Section -->
+                    <div class="mdl-cell mdl-cell--12-col">
+                        <h3 id="header"></h3>
+                        <p id="description"></p>
+                        <h4>Channel Data</h4>
+                        <div class="table-container">
+                            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="output">
+                                <!-- Table content will be dynamically generated -->
+                            </table>
                         </div>
-                    </div>
-
-                    <div class="col-lg-4 col-sm-6">
-                        <button type="button" class="btn btn-primary" onClick="refreshChannels()" id="refresh_channels">
-                            <span class="fas fa-sync"></span>
-                        </button>
-                        <span style="float:right">
-                            <button type="button" class="btn btn-secondary" onClick="toggleConfigureChannelPanel(this)" id="configure-channel-panel">
-                                <span class="fas fa-cog"></span> Configure
-                            </button>
-                            <button type="button" class="btn btn-link" onClick="toggleChannelPanel(this)" id="toggle-channel-panel">
-                                <span class="fas fa-chevron-down"></span>
-                            </button>
-                        </span>
                     </div>
                 </div>
             </div>
+        </main>
 
-            <div class="panel-collapse collapse" id="channel-panel">
-                <div class="card-block">
-                    <h3 id="channels-header"></h3>
-
-                    <div class="well text-muted" id="user-api-prompt" onClick="showConfigureChannelPanel();" style="margin:-1em 0 -1em 0">
-                        <span class="fas fa-info-sign"></span>
-                        <span>Enter a User API Key to browse channels.</span>
-                        <a href="https://thingspeak.com/account/profile" target="_blank">(User API Key?)</a>
-                    </div>
-
-                    <table class="table table-striped" id="channels"></table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card ">
-            <div class="card-header">
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label">Channel</label>
-                            <input type="text" class="form-control feed-form" id="channel">
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label">Read API Key</label>
-                            <input type="text" class="form-control feed-form" id="read_api_key">
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label">Results</label>
-                            <input type="text" class="form-control feed-form" id="results">
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label">Timezone</label>
-                            <select class="form-control feed-form" id="timezone"></select>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-lg-12">
-                        <button type="button" class="btn btn-secondary" onClick="includeLocation(this)" id="location">
-                            <span class="fas fa-square"></span> Location
-                        </button>
-
-                        <button type="button" class="btn btn-secondary" onClick="includeStatus(this)" id="status">
-                            <span class="fas fa-square"></span> Status
-                        </button>
-
-                        <button type="button" class="btn btn-primary" onClick="playPause(this)" id="start">
-                            <span class="fas fa-play"></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-block" style="padding: 10px;">
-                <h1 id="header"></h1>
-                <p id="description"></p>
-                <h3>Channel Data</h3>
-
-                <table class="table table-striped" id="output"></table>
-            </div>
-        </div>
-
+        <footer class="footer-text" role="contentinfo">
+            <i class="material-icons footer-icons" aria-hidden="true">stars</i>
+            <span>Surprises are possible.</span>
+            <i class="material-icons footer-icons" aria-hidden="true">view_list</i>
+            <span>v1.3.0</span>
+            <i class="material-icons footer-icons" aria-hidden="true">code</i>
+            <a href="https://nothans.com/iot" target="_blank" rel="noopener noreferrer">NotHans</a>
+        </footer>
     </div>
-
 </body>
 </html>

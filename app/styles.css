@@ -82,3 +82,146 @@
 .feed-row { transition: background-color 2s ease; }
 .rgb-cell { transition: color 0.5s ease, background-color 0.5s ease; }
 input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: searchfield-cancel-button; }
+.mdl-card {
+    width: 100%;
+    margin-bottom: 24px;
+}
+.mdl-navigation__link.active {
+    background: rgba(255,255,255,0.1);
+}
+.mdl-card__supporting-text {
+    width: auto;
+    padding: 24px;
+}
+.mdl-textfield {
+    width: 100%;
+}
+
+/* Adjustments for the thingspeak page */
+
+.mdl-textfield__input[type="number"] {
+    appearance: none;
+    -moz-appearance: textfield;
+}
+
+.mdl-textfield__input[type="number"]::-webkit-outer-spin-button,
+.mdl-textfield__input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.new-data {
+    background-color: #e0f7fa; /* Light cyan background for new data */
+    transition: background-color 2s ease;
+}
+
+.feed-row {
+    transition: background-color 2s ease;
+}
+
+.rgb-cell {
+    transition: color 0.5s ease, background-color 0.5s ease;
+}
+
+.mdl-data-table__cell--non-numeric {
+    text-align: left;
+}
+
+.mdl-textfield.select {
+    position: relative;
+}
+
+.mdl-textfield.select:after {
+    content: '';
+    position: absolute;
+    top: calc(50% - 8px);
+    right: 0;
+    border-top: 8px solid #5f5f5f;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    pointer-events: none;
+}
+
+.mdl-textfield.select select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: calc(100% - 32px);
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    margin: 0;
+    padding: 4px 0;
+}
+
+.mdl-textfield.is-focused .mdl-textfield__label {
+    color: #3f51b5;
+}
+
+.mdl-textfield.select .mdl-textfield__label {
+    position: absolute;
+    pointer-events: none;
+    left: 0;
+    top: 20px;
+    transition: .2s ease all;
+    color: rgba(0,0,0, 0.26);
+}
+
+.mdl-textfield.select.is-dirty .mdl-textfield__label,
+.mdl-textfield.select.is-focused .mdl-textfield__label {
+    top: 4px;
+    font-size: 12px;
+    color: #3f51b5;
+}
+
+.table-container {
+    max-height: calc(100vh - 400px); /* Adjust the value based on your header/footer heights */
+    overflow-y: auto;
+    margin-bottom: 20px; /* Space between table and footer */
+}
+
+.table-container table {
+    width: 100%;
+}
+
+/* Optional: Keep the header fixed while scrolling */
+.table-container thead th {
+    position: sticky;
+    top: 0;
+    background: white; /* Match your table header background */
+    z-index: 1;
+}
+
+/* Navigation link styles */
+.mdl-layout__header .mdl-navigation__link {
+    color: rgba(255, 255, 255, 0.87);
+    font-weight: 500;
+    padding: 0 24px;
+    height: 36px;
+    line-height: 36px;
+    border-radius: 18px;
+    margin: 0 4px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mdl-layout__header .mdl-navigation__link:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.mdl-layout__header .mdl-navigation__link.active {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+}
+
+.site-title-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.site-title-link:hover {
+    text-decoration: none;
+    color: inherit;
+}

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Debugger - Adafruit IO</title>
+    <meta name="description" content="View data from Adafruit.io channels using the IoT Debugger.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Preconnects -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://code.getmdl.io">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Scripts -->
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script type="text/javascript">
+        // Setup variables
+        var updates = null;
+        var adafruit = {};
+
+        // Move initialization code into window load event
+        window.addEventListener('load', function() {
+            // Check local storage for adafruit settings
+            if (localStorage.getItem('adafruit')) {
+                adafruit = JSON.parse(localStorage.getItem('adafruit'));
+            } else {
+                // Set default adafruit settings
+                adafruit['url'] = 'https://io.adafruit.com/api/v2';
+                adafruit['username'] = 'cheerlights';
+                adafruit['feed_key'] = 'hex';
+                adafruit['api_key'] = '';
+                adafruit['results'] = 5;
+                adafruit['start'] = true;
+
+                // Save to local storage
+                localStorage.setItem('adafruit', JSON.stringify(adafruit));
+            }
+
+            $(document).ready(function() {
+                // Set default inputs
+                $('#username').val(adafruit['username']);
+                $('#feed_key').val(adafruit['feed_key']);
+                $('#api_key').val(adafruit['api_key']);
+                $('#results').val(adafruit['results']);
+
+                // Add these lines to force MDL to recognize the filled inputs
+                $('#username').parent().addClass('is-dirty');
+                $('#feed_key').parent().addClass('is-dirty');
+                $('#api_key').parent().addClass('is-dirty');
+                $('#results').parent().addClass('is-dirty');
+
+                if (adafruit['start']) {
+                    $('#start').find(".material-icons").text("pause");
+                }
+
+                // When feed inputs change update params and clear output
+                $(".feed-form").change(updateFeedParams);
+
+                // Start updates if play button is active
+                if (adafruit['start']) {
+                    // Start updates
+                    getUpdates();
+
+                    // Check for new updates
+                    updates = setInterval(getUpdates, 5000);
+                }
+            });
+        });
+
+        function updateFeedParams() {
+            // Update parameters
+            adafruit['username'] = $('#username').val();
+            adafruit['feed_key'] = $('#feed_key').val();
+            adafruit['api_key'] = $('#api_key').val();
+            adafruit['results'] = $('#results').val();
+
+            // Save to local storage
+            localStorage.setItem('adafruit', JSON.stringify(adafruit));
+
+            // Clear output
+            $('#header').html('');
+            $('#description').html('');
+            $('#output').html('');
+        }
+
+        function getUpdates() {
+            // Build API URL
+            const apiUrl = `${adafruit['url']}/${adafruit['username']}/feeds/${adafruit['feed_key']}/data?limit=${adafruit['results']}`;
+            
+            $.ajax({
+                url: apiUrl,
+                headers: {
+                    'X-AIO-Key': adafruit['api_key']
+                },
+                success: function(data) {
+                    // Reverse the data array
+                    data.reverse();
+
+                    // Create table if it doesn't exist
+                    if ($('#output').find('thead').length == 0) {
+                        // Add head to output table
+                        $('#output').append("<thead><tr></tr></thead>");
+
+                        // Add headers
+                        $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Update Time</th>");
+                        $('#output').find('thead tr').append("<th class='mdl-data-table__cell--non-numeric'>Value</th>");
+
+                        // Add body to output table
+                        $('#output').append("<tbody></tbody>");
+                    }
+
+                    // Process each data point
+                    $.each(data, function(i, feed) {
+                        // Add entry to table if it does not exist
+                        if ($('#output').find('#entry_' + feed.id).length === 0) {
+                            // Create a new blank row
+                            var $new_row = $("<tr id='entry_" + feed.id + "' class='feed-row'></tr>");
+
+                            // Add time/date data
+                            $new_row.append("<td class='mdl-data-table__cell--non-numeric'><time datetime='" + feed.created_at + "'>" + feed.created_at + "</time></td>");
+
+                            // Add value data
+                            $new_row.append(getTableElement(feed.value));
+
+                            // Add the row to the table
+                            $('#output').prepend($new_row);
+
+                            // Set the background color to indicate new data
+                            $new_row.addClass('new-data');
+
+                            // Remove the background color after 500ms
+                            setTimeout(function() {
+                                $new_row.removeClass('new-data');
+                            }, 500);
+                        }
+                    });
+                }
+            });
+        }
+
+        function getTableElement(content) {
+            // Create a table cell element containing the given content
+            var $td = $("<td class='mdl-data-table__cell--non-numeric'>" + content + "</td>");
+
+            // Regex pattern to match RGB hex values
+            var rgbPattern = /^#(([a-f\d]{2}){3})$/i;
+
+            // Check content for a color
+            if (rgbPattern.test(content)) {
+                // Extract that color
+                var color = rgbPattern.exec(content)[0];
+
+                // Mark the cell as a rgb-cell for the CSS transitions
+                $td.addClass('rgb-cell');
+
+                // Set the cell's background color to the hex color
+                $td.css('background-color', color);
+
+                // Determine whether to set the font to white or black depending on the hex color
+                $td.css('color', useDarkFont(color) ? '#000' : '#fff');
+
+                // Remove background and text color when hovering and restore when mouse exits
+                $td.hover(
+                    function() {
+                        $td.css('background-color', '');
+                        $td.css('color', '');
+                    },
+                    function() {
+                        $td.css('background-color', color);
+                        $td.css('color', useDarkFont(color) ? '#000' : '#fff');
+                    });
+            }
+
+            return $td;
+        }
+
+        // Function to determine if dark font should be used on a given background color
+        function useDarkFont(color) {
+            // Regex to separate RGB components
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+
+            // Counting the perceptive luminance - human eye favors green color...
+            var a = 1 - ( 0.299 * parseInt(result[1], 16) + 0.587 * parseInt(result[2], 16) + 0.114 * parseInt(result[3], 16)) / 255;
+
+            return a < 0.5;
+        }
+
+        // Start / stop updates
+        function playPause(button) {
+            // Switch button state and start or stop updates
+            if ($(button).find(".material-icons").text() === "pause") {
+                pause();
+            } else {
+                play();
+            }
+        }
+
+        function pause() {
+            // Show play button state
+            $("#start").find(".material-icons").text("play_arrow");
+
+            // Update params
+            adafruit['start'] = false;
+
+            // Stop updates
+            clearInterval(updates);
+
+            // Save to local storage
+            localStorage.setItem('adafruit', JSON.stringify(adafruit));
+        }
+
+        function play() {
+            // Show pause button state
+            $("#start").find(".material-icons").text("pause");
+
+            // Update params
+            adafruit['start'] = true;
+
+            // Start updates
+            getUpdates();
+
+            // Check for new updates
+            updates = setInterval(getUpdates, 5000);
+
+            // Save to local storage
+            localStorage.setItem('adafruit', JSON.stringify(adafruit));
+        }
+    </script>
+</head>
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header" role="banner">
+            <div class="mdl-layout__header-row">
+                <a href="index.html" class="site-title-link">
+                    <img src="favicon.svg" alt="IoT Debugger Logo" class="site-logo" width="32" height="32">
+                    <h1 class="mdl-layout-title">IoT Debugger</h1>
+                </a>
+                <div class="mdl-layout-spacer"></div>
+                <nav class="mdl-navigation" role="navigation">
+                    <a class="mdl-navigation__link" href="thingspeak.html">ThingSpeak</a>
+                </nav>
+                <nav class="mdl-navigation" role="navigation">
+                    <a class="mdl-navigation__link active" href="adafruit.html">Adafruit IO</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="mdl-layout__content" role="main">
+            <div class="page-content">
+                <div class="mdl-grid">
+                    <!-- Form Section -->
+                    <div class="mdl-cell mdl-cell--12-col">
+                        <h2>Adafruit IO Feed Data</h2>
+                        <form action="#" class="mdl-grid">
+                            <!-- Username -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="text" id="username">
+                                    <label class="mdl-textfield__label" for="username">Username</label>
+                                </div>
+                            </div>
+                            <!-- Feed Key -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="text" id="feed_key">
+                                    <label class="mdl-textfield__label" for="feed_key">Feed Key</label>
+                                </div>
+                            </div>
+                            <!-- API Key -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="text" id="api_key">
+                                    <label class="mdl-textfield__label" for="api_key">API Key</label>
+                                </div>
+                            </div>
+                            <!-- Results -->
+                            <div class="mdl-cell mdl-cell--6-col">
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input feed-form" type="number" id="results">
+                                    <label class="mdl-textfield__label" for="results">Results</label>
+                                </div>
+                            </div>
+                            <!-- Buttons -->
+                            <div class="mdl-cell mdl-cell--12-col">
+                                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="playPause(this)" id="start">
+                                    <i class="material-icons">play_arrow</i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div class="mdl-cell mdl-cell--12-col">
+                        <h3 id="header"></h3>
+                        <p id="description"></p>
+                        <h4>Feed Data</h4>
+                        <div class="table-container">
+                            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="output">
+                                <!-- Table content will be dynamically generated -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer-text" role="contentinfo">
+            <i class="material-icons footer-icons" aria-hidden="true">stars</i>
+            <span>Surprises are possible.</span>
+            <i class="material-icons footer-icons" aria-hidden="true">view_list</i>
+            <span>v1.3.0</span>
+            <i class="material-icons footer-icons" aria-hidden="true">code</i>
+            <a href="https://nothans.com/iot" target="_blank" rel="noopener noreferrer">NotHans</a>
+        </footer>
+    </div>
+</body>
+</html>
