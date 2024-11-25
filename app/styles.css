@@ -225,3 +225,31 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: searchf
     text-decoration: none;
     color: inherit;
 }
+
+/* Navigation container styles */
+.nav-container {
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 480px) {
+    .mdl-layout__header-row {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    
+    .site-logo {
+        margin-left: 0;
+        margin-right: 8px;
+    }
+    
+    .mdl-layout-title {
+        font-size: 18px;
+    }
+    
+    .mdl-layout__header .mdl-navigation__link {
+        padding: 0 12px;
+        margin: 0 2px;
+    }
+}
