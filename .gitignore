@@ -1,2 +1,6 @@
 .DS_STORE
 .vscode
+CLAUDE.md
+/.playwright-mcp
+.claude/settings.local.json
+docs/
