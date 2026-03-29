@@ -114,6 +114,7 @@
                 success: function(data) {
                     // Reverse the data array
                     data.reverse();
+                    $('#add-to-dashboard').show().attr('href', '#').off('click').on('click', function(e) { e.preventDefault(); addToDashboard(); });
 
                     // Create table if it doesn't exist
                     if ($('#output').find('thead').length == 0) {
@@ -334,6 +335,30 @@
 
             $('#stat-entries').text($('#output').find('tbody tr').length || data.length);
         }
+
+        function addToDashboard() {
+            var dashboard = JSON.parse(localStorage.getItem('dashboard') || '{"sources":[]}');
+            var id = 'aio-' + adafruit['username'] + '-' + adafruit['feed_key'];
+            for (var i = 0; i < dashboard.sources.length; i++) {
+                if (dashboard.sources[i].id === id) {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+            }
+            if (dashboard.sources.length >= 10) { alert('Dashboard limit reached (10 sources)'); return; }
+            dashboard.sources.push({
+                id: id,
+                type: 'adafruit',
+                name: adafruit['username'] + '/' + adafruit['feed_key'],
+                username: adafruit['username'],
+                feed_key: adafruit['feed_key'],
+                api_key: adafruit['api_key'] || '',
+                results: 10,
+                paused: false
+            });
+            localStorage.setItem('dashboard', JSON.stringify(dashboard));
+            window.location.href = 'dashboard.html';
+        }
     </script>
 </head>
 <body>
@@ -444,7 +469,7 @@
             <i class="material-icons footer-icons" aria-hidden="true">stars</i>
             <span>Surprises are possible.</span>
             <i class="material-icons footer-icons" aria-hidden="true">view_list</i>
-            <span>v1.3.0</span>
+            <span>v2.0.0</span>
             <i class="material-icons footer-icons" aria-hidden="true">code</i>
             <a href="https://nothans.com/iot" target="_blank" rel="noopener noreferrer">NotHans</a>
         </footer>
