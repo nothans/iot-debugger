@@ -43,30 +43,62 @@
 
         <main class="mdl-layout__content" role="main">
             <div class="page-content">
-                <article class="welcome-card mdl-card mdl-shadow--2dp">
+                <div class="hero-section mdl-card mdl-shadow--2dp">
                     <div class="mdl-card__title">
-                        <h2 class="mdl-card__title-text">Welcome to the IoT Debugger</h2>
+                        <h2 class="mdl-card__title-text">Monitor your IoT data sources in one place</h2>
                         <img src="iot-debugger-icon.svg" alt="IoT Debugger Logo">
                     </div>
                     <div class="mdl-card__supporting-text">
-                        <p>Use the IoT Debugger to view and explore ThingSpeak channel data and Adafruit IO feed data from their APIs. Contribute to
-                        the project on <a href="https://github.com/nothans/iot-debugger" aria-label="GitHub repository">GitHub</a>.</p>
+                        <p>View and explore ThingSpeak channel data and Adafruit IO feed data from their APIs. Contribute to the project on <a href="https://github.com/nothans/iot-debugger" aria-label="GitHub repository">GitHub</a>.</p>
                     </div>
-                    <div class="mdl-card__actions mdl-card--border">
-                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" 
-                           href="thingspeak.html" 
-                           aria-label="Go to ThingSpeak data view">
-                            View ThingSpeak data
-                            <i class="material-icons" aria-hidden="true">arrow_forward</i>
-                        </a>
-                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" 
-                           href="adafruit.html" 
-                           aria-label="Go to Adafruit IO data view">
-                            View Adafruit IO data
-                            <i class="material-icons" aria-hidden="true">arrow_forward</i>
-                        </a>
-                    </div>
-                </article>
+                </div>
+
+                <div class="home-cards">
+                    <a href="dashboard.html" class="home-card home-card--primary mdl-card mdl-shadow--2dp">
+                        <div class="mdl-card__title">
+                            <i class="material-icons home-card__icon">dashboard</i>
+                            <h3 class="mdl-card__title-text">Dashboard</h3>
+                        </div>
+                        <div class="mdl-card__supporting-text">
+                            Monitor multiple sources at a glance
+                        </div>
+                        <div class="mdl-card__actions mdl-card--border">
+                            <span class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                                Open Dashboard <i class="material-icons">arrow_forward</i>
+                            </span>
+                        </div>
+                    </a>
+
+                    <a href="thingspeak.html" class="home-card mdl-card mdl-shadow--2dp">
+                        <div class="mdl-card__title">
+                            <i class="material-icons home-card__icon">sensors</i>
+                            <h3 class="mdl-card__title-text">ThingSpeak</h3>
+                        </div>
+                        <div class="mdl-card__supporting-text">
+                            Quick debug a ThingSpeak channel
+                        </div>
+                        <div class="mdl-card__actions mdl-card--border">
+                            <span class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                                View Data <i class="material-icons">arrow_forward</i>
+                            </span>
+                        </div>
+                    </a>
+
+                    <a href="adafruit.html" class="home-card mdl-card mdl-shadow--2dp">
+                        <div class="mdl-card__title">
+                            <i class="material-icons home-card__icon">cloud</i>
+                            <h3 class="mdl-card__title-text">Adafruit IO</h3>
+                        </div>
+                        <div class="mdl-card__supporting-text">
+                            Quick debug an Adafruit IO feed
+                        </div>
+                        <div class="mdl-card__actions mdl-card--border">
+                            <span class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                                View Data <i class="material-icons">arrow_forward</i>
+                            </span>
+                        </div>
+                    </a>
+                </div>
             </div>
         </main>
 
