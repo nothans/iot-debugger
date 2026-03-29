@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Debugger - Dashboard</title>
+    <meta name="description" content="Monitor multiple IoT data sources at a glance with the IoT Debugger Dashboard.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Preconnects -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Scripts -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script type="text/javascript">
+        var dashboard = { sources: [] };
+        var intervals = {};
+        var charts = {};
+        var globalPaused = false;
+
+        window.addEventListener('load', function() {
+            loadDashboard();
+            renderAll();
+
+            // Dialog type toggle
+            $('input[name="dlg-type"]').change(function() {
+                if ($(this).val() === 'thingspeak') {
+                    $('#dlg-ts-fields').show();
+                    $('#dlg-aio-fields').hide();
+                } else {
+                    $('#dlg-ts-fields').hide();
+                    $('#dlg-aio-fields').show();
+                }
+            });
+        });
+
+        function loadDashboard() {
+            var stored = localStorage.getItem('dashboard');
+            if (stored) {
+                dashboard = JSON.parse(stored);
+            }
+        }
+
+        function saveDashboard() {
+            localStorage.setItem('dashboard', JSON.stringify(dashboard));
+        }
+
+        function renderAll() {
+            $('#dash-grid').empty();
+            charts = {};
+            Object.keys(intervals).forEach(function(id) { clearInterval(intervals[id]); });
+            intervals = {};
+
+            if (dashboard.sources.length === 0) {
+                $('#dash-empty').show();
+                return;
+            }
+            $('#dash-empty').hide();
+
+            dashboard.sources.forEach(function(source) {
+                renderCard(source);
+                if (!source.paused && !globalPaused) {
+                    startPolling(source);
+                }
+            });
+        }
+
+        function renderCard(source) {
+            var badgeClass = source.type === 'thingspeak' ? 'dash-card__badge--thingspeak' : 'dash-card__badge--adafruit';
+            var badgeText = source.type === 'thingspeak' ? 'ThingSpeak' : 'Adafruit IO';
+
+            var html = '<div class="dash-card mdl-card mdl-shadow--2dp" id="card-' + source.id + '">' +
+                '<div class="dash-card__header">' +
+                    '<span class="dash-card__badge ' + badgeClass + '">' + badgeText + '</span>' +
+                    '<span class="dash-card__name">' + source.name + '</span>' +
+                    '<button class="mdl-button mdl-button--icon" onclick="removeSource(\'' + source.id + '\')">' +
+                        '<i class="material-icons">close</i>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="dash-card__stats">' +
+                    '<div class="stat-item"><span class="stat-label">Latest</span><span class="stat-value" id="stat-latest-' + source.id + '">&mdash;</span></div>' +
+                    '<div class="stat-item"><span class="stat-label">Updated</span><span class="stat-value" id="stat-updated-' + source.id + '">&mdash;</span></div>' +
+                    '<div class="stat-item"><span class="stat-label">Entries</span><span class="stat-value" id="stat-entries-' + source.id + '">&mdash;</span></div>' +
+                '</div>' +
+                '<div class="dash-card__chart"><canvas id="chart-' + source.id + '"></canvas></div>' +
+                '<div class="dash-card__table">' +
+                    '<table class="mdl-data-table mdl-js-data-table" id="table-' + source.id + '"></table>' +
+                '</div>' +
+                '<div class="dash-card__error" id="error-' + source.id + '" style="display:none;"></div>' +
+            '</div>';
+
+            $('#dash-grid').append(html);
+        }
+
+        function removeSource(id) {
+            stopPolling(id);
+            if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+            $('#card-' + id).remove();
+            dashboard.sources = dashboard.sources.filter(function(s) { return s.id !== id; });
+            saveDashboard();
+            if (dashboard.sources.length === 0) { $('#dash-empty').show(); }
+        }
+
+        function startPolling(source) {
+            fetchData(source);
+            intervals[source.id] = setInterval(function() { fetchData(source); }, 5000);
+        }
+
+        function stopPolling(id) {
+            if (intervals[id]) { clearInterval(intervals[id]); delete intervals[id]; }
+        }
+
+        function fetchData(source) {
+            if (source.type === 'thingspeak') {
+                fetchThingSpeak(source);
+            } else {
+                fetchAdafruit(source);
+            }
+        }
+
+        function fetchThingSpeak(source) {
+            var url = 'https://api.thingspeak.com/channels/' + source.channel + '/feed.json?results=' + (source.results || 10) + '&timezone=' + (source.timezone || 'Etc/UTC') + '&api_key=' + (source.read_api_key || '');
+
+            $.getJSON(url, function(data) {
+                $('#error-' + source.id).hide();
+                if (!data.channel || !data.feeds) return;
+
+                updateCardChart(source, data);
+                updateCardStats(source, data.feeds);
+                updateCardTable(source, data);
+            }).fail(function() {
+                $('#error-' + source.id).text('Failed to fetch data. Check channel ID and API key.').show();
+            });
+        }
+
+        function fetchAdafruit(source) {
+            var url = 'https://io.adafruit.com/api/v2/' + source.username + '/feeds/' + source.feed_key + '/data?limit=' + (source.results || 10);
+
+            $.ajax({
+                url: url,
+                headers: { 'X-AIO-Key': source.api_key || '' },
+                success: function(data) {
+                    $('#error-' + source.id).hide();
+                    if (!data || data.length === 0) return;
+                    data.reverse();
+
+                    updateCardChartAdafruit(source, data);
+                    updateCardStatsAdafruit(source, data);
+                    updateCardTableAdafruit(source, data);
+                },
+                error: function() {
+                    $('#error-' + source.id).text('Failed to fetch data. Check username, feed key, and API key.').show();
+                }
+            });
+        }
+
+        function updateCardChart(source, data) {
+            var fieldNames = [];
+            for (var i = 1; i <= 8; i++) {
+                if (data.channel.hasOwnProperty('field' + i)) {
+                    fieldNames.push(data.channel['field' + i] || 'Field ' + i);
+                }
+            }
+
+            if (!charts[source.id]) {
+                var ctx = document.getElementById('chart-' + source.id).getContext('2d');
+                var datasets = [];
+                var colors = ['#3f51b5','#e91e63','#4caf50','#ff9800','#9c27b0','#00bcd4','#795548','#607d8b'];
+                for (var i = 0; i < fieldNames.length; i++) {
+                    datasets.push({
+                        label: fieldNames[i],
+                        data: [],
+                        borderColor: colors[i % colors.length],
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        tension: 0.3,
+                        fill: false
+                    });
+                }
+                charts[source.id] = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: [], datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: fieldNames.length > 1, labels: { boxWidth: 12 } } },
+                        scales: { x: { display: false }, y: { display: true } }
+                    }
+                });
+            }
+
+            var sorted = data.feeds.slice().sort(function(a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+            var labels = [];
+            var fieldData = [];
+            for (var i = 0; i < fieldNames.length; i++) { fieldData.push([]); }
+
+            sorted.forEach(function(feed) {
+                labels.push(feed.created_at.replace('T', ' ').replace('Z', ''));
+                var fi = 0;
+                for (var j = 1; j <= 8; j++) {
+                    if (data.channel.hasOwnProperty('field' + j)) {
+                        var val = parseFloat(feed['field' + j]);
+                        fieldData[fi].push(isNaN(val) ? null : val);
+                        fi++;
+                    }
+                }
+            });
+
+            charts[source.id].data.labels = labels;
+            for (var i = 0; i < fieldData.length; i++) {
+                charts[source.id].data.datasets[i].data = fieldData[i];
+            }
+            charts[source.id].update();
+        }
+
+        function updateCardChartAdafruit(source, data) {
+            if (!charts[source.id]) {
+                var ctx = document.getElementById('chart-' + source.id).getContext('2d');
+                charts[source.id] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Value',
+                            data: [],
+                            borderColor: '#3f51b5',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            tension: 0.3,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { display: true } }
+                    }
+                });
+            }
+
+            var sorted = data.slice().sort(function(a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+            var labels = [];
+            var values = [];
+            sorted.forEach(function(feed) {
+                labels.push(feed.created_at.replace('T', ' ').replace('Z', ''));
+                var val = parseFloat(feed.value);
+                values.push(isNaN(val) ? null : val);
+            });
+
+            charts[source.id].data.labels = labels;
+            charts[source.id].data.datasets[0].data = values;
+            charts[source.id].update();
+        }
+
+        function updateCardStats(source, feeds) {
+            var latest = feeds[feeds.length - 1];
+            for (var i = 1; i <= 8; i++) {
+                if (latest.hasOwnProperty('field' + i) && latest['field' + i] !== null) {
+                    $('#stat-latest-' + source.id).text(latest['field' + i]);
+                    break;
+                }
+            }
+            var diffSec = Math.round((Date.now() - new Date(latest.created_at).getTime()) / 1000);
+            if (diffSec < 60) { $('#stat-updated-' + source.id).text(diffSec + 's ago'); }
+            else if (diffSec < 3600) { $('#stat-updated-' + source.id).text(Math.round(diffSec / 60) + 'm ago'); }
+            else { $('#stat-updated-' + source.id).text(Math.round(diffSec / 3600) + 'h ago'); }
+            $('#stat-entries-' + source.id).text(feeds.length);
+        }
+
+        function updateCardStatsAdafruit(source, data) {
+            var latest = data[data.length - 1];
+            $('#stat-latest-' + source.id).text(latest.value);
+            var diffSec = Math.round((Date.now() - new Date(latest.created_at).getTime()) / 1000);
+            if (diffSec < 60) { $('#stat-updated-' + source.id).text(diffSec + 's ago'); }
+            else if (diffSec < 3600) { $('#stat-updated-' + source.id).text(Math.round(diffSec / 60) + 'm ago'); }
+            else { $('#stat-updated-' + source.id).text(Math.round(diffSec / 3600) + 'h ago'); }
+            $('#stat-entries-' + source.id).text(data.length);
+        }
+
+        function updateCardTable(source, data) {
+            var $table = $('#table-' + source.id);
+            if ($table.find('thead').length === 0) {
+                var thead = '<thead><tr><th class="mdl-data-table__cell--non-numeric">Time</th>';
+                for (var i = 1; i <= 8; i++) {
+                    if (data.channel.hasOwnProperty('field' + i)) {
+                        thead += '<th class="mdl-data-table__cell--non-numeric">' + (data.channel['field' + i] || 'Field ' + i) + '</th>';
+                    }
+                }
+                thead += '</tr></thead><tbody></tbody>';
+                $table.html(thead);
+            }
+
+            // Show only last 5 entries
+            var feeds = data.feeds.slice(-5);
+            var $tbody = $table.find('tbody');
+            feeds.forEach(function(feed) {
+                if ($table.find('#de-' + source.id + '-' + feed.entry_id).length === 0) {
+                    var row = '<tr id="de-' + source.id + '-' + feed.entry_id + '">';
+                    row += '<td class="mdl-data-table__cell--non-numeric">' + feed.created_at.replace('T', ' ').replace('Z', '') + '</td>';
+                    for (var j = 1; j <= 8; j++) {
+                        if (data.channel.hasOwnProperty('field' + j)) {
+                            row += '<td class="mdl-data-table__cell--non-numeric">' + (feed['field' + j] || '') + '</td>';
+                        }
+                    }
+                    row += '</tr>';
+                    $tbody.prepend(row);
+                }
+            });
+
+            // Keep only 5 rows
+            while ($tbody.find('tr').length > 5) {
+                $tbody.find('tr:last').remove();
+            }
+        }
+
+        function updateCardTableAdafruit(source, data) {
+            var $table = $('#table-' + source.id);
+            if ($table.find('thead').length === 0) {
+                $table.html('<thead><tr><th class="mdl-data-table__cell--non-numeric">Time</th><th class="mdl-data-table__cell--non-numeric">Value</th></tr></thead><tbody></tbody>');
+            }
+
+            var feeds = data.slice(-5);
+            var $tbody = $table.find('tbody');
+            feeds.forEach(function(feed) {
+                if ($table.find('#de-' + source.id + '-' + feed.id).length === 0) {
+                    var row = '<tr id="de-' + source.id + '-' + feed.id + '">';
+                    row += '<td class="mdl-data-table__cell--non-numeric">' + feed.created_at.replace('T', ' ').replace('Z', '') + '</td>';
+                    row += '<td class="mdl-data-table__cell--non-numeric">' + feed.value + '</td>';
+                    row += '</tr>';
+                    $tbody.prepend(row);
+                }
+            });
+
+            while ($tbody.find('tr').length > 5) {
+                $tbody.find('tr:last').remove();
+            }
+        }
+
+        // Dialog functions
+        function openAddDialog() {
+            var dialog = document.getElementById('add-source-dialog');
+            if (!dialog.showModal) {
+                dialogPolyfill.registerDialog(dialog);
+            }
+            dialog.showModal();
+        }
+
+        function closeAddDialog() {
+            document.getElementById('add-source-dialog').close();
+            // Clear fields
+            $('#dlg-name').val('');
+            $('#dlg-channel').val('');
+            $('#dlg-ts-apikey').val('');
+            $('#dlg-username').val('');
+            $('#dlg-feedkey').val('');
+            $('#dlg-aio-apikey').val('');
+        }
+
+        function submitAddDialog() {
+            var type = $('input[name="dlg-type"]:checked').val();
+            var name = $('#dlg-name').val().trim();
+
+            if (dashboard.sources.length >= 10) {
+                alert('Dashboard limit reached (10 sources)');
+                return;
+            }
+
+            var source;
+            if (type === 'thingspeak') {
+                var channel = $('#dlg-channel').val().trim();
+                if (!channel) { alert('Channel ID is required'); return; }
+                if (!name) { name = 'ThingSpeak ' + channel; }
+                source = {
+                    id: 'ts-' + channel,
+                    type: 'thingspeak',
+                    name: name,
+                    channel: channel,
+                    read_api_key: $('#dlg-ts-apikey').val().trim(),
+                    results: 10,
+                    timezone: 'Etc/UTC',
+                    paused: false
+                };
+            } else {
+                var username = $('#dlg-username').val().trim();
+                var feedKey = $('#dlg-feedkey').val().trim();
+                if (!username || !feedKey) { alert('Username and Feed Key are required'); return; }
+                if (!name) { name = username + '/' + feedKey; }
+                source = {
+                    id: 'aio-' + username + '-' + feedKey,
+                    type: 'adafruit',
+                    name: name,
+                    username: username,
+                    feed_key: feedKey,
+                    api_key: $('#dlg-aio-apikey').val().trim(),
+                    results: 10,
+                    paused: false
+                };
+            }
+
+            // Check for duplicate
+            for (var i = 0; i < dashboard.sources.length; i++) {
+                if (dashboard.sources[i].id === source.id) {
+                    alert('This source is already on the dashboard');
+                    return;
+                }
+            }
+
+            dashboard.sources.push(source);
+            saveDashboard();
+            closeAddDialog();
+            $('#dash-empty').hide();
+            renderCard(source);
+            startPolling(source);
+        }
+
+        function toggleAll() {
+            globalPaused = !globalPaused;
+            if (globalPaused) {
+                $('#global-toggle').find('.material-icons').text('play_arrow');
+                dashboard.sources.forEach(function(s) { stopPolling(s.id); });
+            } else {
+                $('#global-toggle').find('.material-icons').text('pause');
+                dashboard.sources.forEach(function(s) { startPolling(s); });
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header" role="banner">
+            <div class="mdl-layout__header-row">
+                <a href="index.html" class="site-title-link">
+                    <img src="favicon.svg" alt="IoT Debugger Logo" class="site-logo" width="32" height="32">
+                    <h1 class="mdl-layout-title">IoT Debugger</h1>
+                </a>
+                <div class="mdl-layout-spacer"></div>
+                <nav class="mdl-navigation nav-container" role="navigation">
+                    <a class="mdl-navigation__link active" href="dashboard.html">Dashboard</a>
+                    <a class="mdl-navigation__link" href="thingspeak.html">ThingSpeak</a>
+                    <a class="mdl-navigation__link" href="adafruit.html">Adafruit IO</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="mdl-layout__content" role="main">
+            <div class="page-content">
+                <div class="mdl-grid">
+                    <div class="mdl-cell mdl-cell--12-col">
+                        <h2>Dashboard</h2>
+                        <div class="dash-toolbar">
+                            <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored" onclick="openAddDialog()">
+                                <i class="material-icons">add</i> Add Source
+                            </button>
+                            <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="toggleAll()" id="global-toggle">
+                                <i class="material-icons">pause</i>
+                            </button>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div class="dash-empty" id="dash-empty">
+                            <i class="material-icons">dashboard</i>
+                            <p>No data sources yet. Click "Add Source" to get started.</p>
+                        </div>
+
+                        <!-- Card grid -->
+                        <div class="dash-grid" id="dash-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <dialog class="mdl-dialog" id="add-source-dialog">
+            <h4 class="mdl-dialog__title">Add Data Source</h4>
+            <div class="mdl-dialog__content">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width:100%">
+                    <input class="mdl-textfield__input" type="text" id="dlg-name">
+                    <label class="mdl-textfield__label" for="dlg-name">Display Name</label>
+                </div>
+                <div style="margin: 16px 0;">
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="dlg-type-ts">
+                        <input type="radio" id="dlg-type-ts" class="mdl-radio__button" name="dlg-type" value="thingspeak" checked>
+                        <span class="mdl-radio__label">ThingSpeak</span>
+                    </label>
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="dlg-type-aio">
+                        <input type="radio" id="dlg-type-aio" class="mdl-radio__button" name="dlg-type" value="adafruit">
+                        <span class="mdl-radio__label">Adafruit IO</span>
+                    </label>
+                </div>
+                <!-- ThingSpeak fields -->
+                <div id="dlg-ts-fields">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width:100%">
+                        <input class="mdl-textfield__input" type="text" id="dlg-channel">
+                        <label class="mdl-textfield__label" for="dlg-channel">Channel ID</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width:100%">
+                        <input class="mdl-textfield__input" type="text" id="dlg-ts-apikey">
+                        <label class="mdl-textfield__label" for="dlg-ts-apikey">Read API Key (optional)</label>
+                    </div>
+                </div>
+                <!-- Adafruit fields -->
+                <div id="dlg-aio-fields" style="display:none;">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width:100%">
+                        <input class="mdl-textfield__input" type="text" id="dlg-username">
+                        <label class="mdl-textfield__label" for="dlg-username">Username</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width:100%">
+                        <input class="mdl-textfield__input" type="text" id="dlg-feedkey">
+                        <label class="mdl-textfield__label" for="dlg-feedkey">Feed Key</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width:100%">
+                        <input class="mdl-textfield__input" type="text" id="dlg-aio-apikey">
+                        <label class="mdl-textfield__label" for="dlg-aio-apikey">API Key (optional)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mdl-dialog__actions">
+                <button type="button" class="mdl-button mdl-button--colored" onclick="submitAddDialog()">Add</button>
+                <button type="button" class="mdl-button close" onclick="closeAddDialog()">Cancel</button>
+            </div>
+        </dialog>
+
+        <footer class="footer-text" role="contentinfo">
+            <i class="material-icons footer-icons" aria-hidden="true">stars</i>
+            <span>Surprises are possible.</span>
+            <i class="material-icons footer-icons" aria-hidden="true">view_list</i>
+            <span>v1.3.0</span>
+            <i class="material-icons footer-icons" aria-hidden="true">code</i>
+            <a href="https://nothans.com/iot" target="_blank" rel="noopener noreferrer">NotHans</a>
+        </footer>
+    </div>
+</body>
+</html>
